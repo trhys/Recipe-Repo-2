@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/trhys/Recipe-Repo-2/internal/database"
-	//"github.com/trhys/Recipe-Repo-2/internal/auth"
+	"github.com/trhys/Recipe-Repo-2/internal/auth"
 )
 
 type createUserRequest struct {
@@ -30,10 +30,16 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	hash, err := auth.HashPassword(req.Password)
+	if err != nil {
+		respondFail(w, 500, "Failed to hash password", err)
+		return
+	}
+
 	query := database.CreateUserParams{
 		ID: uuid.New(),
 		Email: req.Email,
-		HashedPw: req.Password, // todo: build auth package and hash pw
+		HashedPw: hash,
 	}
 
 	user, err := cfg.db.CreateUser(r.Context(), query)
