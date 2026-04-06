@@ -12,21 +12,28 @@ import (
 )
 
 const createRecipe = `-- name: CreateRecipe :one
-INSERT INTO recipes (id, created_at, updated_at, user_id)
+INSERT INTO recipes (id, title, created_at, updated_at, user_id)
 VALUES(
 	gen_random_uuid(),
+	$1,
 	NOW(),
 	NOW(),
-	$1
+	$2
 )
-RETURNING id, created_at, updated_at, user_id
+RETURNING id, title, created_at, updated_at, user_id
 `
 
-func (q *Queries) CreateRecipe(ctx context.Context, userID uuid.UUID) (Recipe, error) {
-	row := q.db.QueryRowContext(ctx, createRecipe, userID)
+type CreateRecipeParams struct {
+	Title  string
+	UserID uuid.UUID
+}
+
+func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Recipe, error) {
+	row := q.db.QueryRowContext(ctx, createRecipe, arg.Title, arg.UserID)
 	var i Recipe
 	err := row.Scan(
 		&i.ID,
+		&i.Title,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.UserID,

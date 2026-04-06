@@ -52,6 +52,8 @@ func main() {
 	mux.HandleFunc("POST /api/login", config.handlerLogin)
 	mux.HandleFunc("POST /api/reset", config.handlerReset)
 
+	mux.HandleFunc("POST /api/new_recipe", config.handlerCreateRecipe)
+
 	log.Print("Successfully loaded server config...")
 
 	if err := server.ListenAndServe(); err != nil {

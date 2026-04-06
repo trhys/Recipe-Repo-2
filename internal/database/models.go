@@ -12,6 +12,7 @@ import (
 
 type Recipe struct {
 	ID        uuid.UUID
+	Title     string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	UserID    uuid.UUID
