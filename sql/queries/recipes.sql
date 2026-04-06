@@ -8,3 +8,7 @@ VALUES(
 	$2
 )
 RETURNING *;
+
+-- name: GetRecipe :one
+SELECT * FROM recipes
+WHERE id = $1;

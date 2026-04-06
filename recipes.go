@@ -121,3 +121,49 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 
 	respondJSON(w, 201, res)
 }
+
+// Get recipe by ID
+func (cfg *apiConfig) handlerGetRecipe(w http.ResponseWriter, r *http.Request) {
+	requested := r.PathValue("recipe_id")
+	recipe_id, err := uuid.Parse(requested)
+	if err != nil {
+		respondFail(w, 404, "Invalid recipe id", err)
+		return
+	}
+
+	recipe, err := cfg.db.GetRecipe(r.Context(), recipe_id)
+	if err != nil {
+		respondFail(w, 404, "Couldn't find recipe id", err)
+		return
+	}
+
+	i, err := cfg.db.GetIngredientList(r.Context(), recipe_id)
+	if err != nil {
+		respondFail(w, 404, "Couldn't find ingredients", err)
+		return
+	}
+
+	ingredients := []ingredient{}
+	for _, ing := range i {
+		ingredients = append(ingredients, ingredient{
+			ID: ing.ID,
+			Name: ing.Name,
+			Quantity: ing.Quantity,
+			Unit: ing.Unit,
+			CreatedAt: ing.CreatedAt,
+			UpdatedAt: ing.UpdatedAt,
+			RecipeID: ing.RecipeID,
+		})
+	}
+
+	res := recipeResponse{
+		ID: recipe.ID,
+		Title: recipe.Title,
+		CreatedAt: recipe.CreatedAt,
+		UpdatedAt: recipe.UpdatedAt,
+		UserID: recipe.UserID,
+		Ingredients: ingredients,
+	}
+
+	respondJSON(w, 200, res)
+}

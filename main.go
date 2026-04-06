@@ -74,6 +74,7 @@ func main() {
 	mux.HandleFunc("POST /api/login", config.handlerLogin)
 	mux.HandleFunc("POST /api/reset", config.handlerReset)
 
+	mux.HandleFunc("GET /api/recipes/{recipe_id}", config.handlerGetRecipe)
 	mux.HandleFunc("POST /api/new_recipe", config.handlerCreateRecipe)
 
 	log.Print("Successfully loaded server config...")

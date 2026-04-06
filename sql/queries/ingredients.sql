@@ -9,3 +9,8 @@ VALUES (
 	NOW(),
 	$4
 ) RETURNING *;
+
+-- name: GetIngredientList :many
+SELECT * FROM ingredients
+WHERE recipe_id = $1
+ORDER BY created_at;

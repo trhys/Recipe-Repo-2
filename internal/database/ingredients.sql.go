@@ -50,3 +50,40 @@ func (q *Queries) CreateIngredient(ctx context.Context, arg CreateIngredientPara
 	)
 	return i, err
 }
+
+const getIngredientList = `-- name: GetIngredientList :many
+SELECT id, name, quantity, unit, created_at, updated_at, recipe_id FROM ingredients
+WHERE recipe_id = $1
+ORDER BY created_at
+`
+
+func (q *Queries) GetIngredientList(ctx context.Context, recipeID uuid.UUID) ([]Ingredient, error) {
+	rows, err := q.db.QueryContext(ctx, getIngredientList, recipeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Ingredient
+	for rows.Next() {
+		var i Ingredient
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Quantity,
+			&i.Unit,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.RecipeID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

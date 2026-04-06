@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func AuthTest(t *testing.T) {
+func TestAuth(t *testing.T) {
 	res, err := http.Post("http://localhost:8080/api/new_user", "application/json", bytes.NewBuffer([]byte(`{"email": "authorizeduser@test.com", "password": "password1"}`)))
 	decoder := json.NewDecoder(res.Body)
 	var user struct{

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -123,6 +124,8 @@ func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
 		respondFail(w, 500, "Something went wrong during users reset", err)
 		return
 	}
+
+	log.Print("Reset database...")
 
 	respondJSON(w, 201, nil)
 }
