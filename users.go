@@ -16,9 +16,10 @@ type createUserRequest struct {
 	Password	string `json:"password"`
 }
 
-type createUserResponse struct {
+type userResponse struct {
 	ID		uuid.UUID `json:"id"`
 	CreatedAt	time.Time `json:"created_at"`
+	UpdatedAt	time.Time `json:"updated_at"`
 	Email		string `json:"email"`
 }
 
@@ -48,9 +49,10 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	res := createUserResponse{
+	res := userResponse{
 		ID: user.ID,
 		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.CreatedAt,
 		Email: user.Email,
 	}
 
@@ -67,6 +69,7 @@ type loginRequest struct {
 type loginResponse struct {
 	ID		uuid.UUID `json:"id"`
 	Email		string `json:"email"`
+	JWT		string `json:"token"`
 }
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
@@ -91,9 +94,15 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if match {
+		token, err := auth.MakeJWT(user.ID, cfg.secret, cfg.jwtDuration)
+		if err != nil{
+			respondFail(w, 500, "Failed to generate token", err)
+			return
+		}
 		respondJSON(w, 201, loginResponse{
 			ID: user.ID,
 			Email: req.Email,
+			JWT: token,
 		})
 		return
 	} else {
@@ -116,4 +125,29 @@ func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, 201, nil)
+}
+
+// Get User by ID
+func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("user_id")
+	user_id, err := uuid.Parse(id)
+	if err != nil {
+		respondFail(w, 404, "Invalid user id", err)
+		return
+	}
+
+	user, err := cfg.db.GetUser(r.Context(), user_id)
+	if err != nil {
+		respondFail(w, 404, "Couldn't find user id", err)
+		return
+	}
+
+	res := userResponse{
+		ID: user.ID,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Email: user.Email,
+	}
+
+	respondJSON(w, 200, res)
 }

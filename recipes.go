@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/trhys/Recipe-Repo-2/internal/database"
+	"github.com/trhys/Recipe-Repo-2/internal/auth"
 )
 
 type ingredient struct {
@@ -29,6 +30,7 @@ type recipeResponse struct {
 }
 
 func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request) {
+	// Request
 	decoder := json.NewDecoder(r.Body)
 	var req struct{
 		Title string `json:"title"`
@@ -44,14 +46,40 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Make sure user exists
+	user, err := cfg.db.GetUser(r.Context(), req.UserID)
+	if err != nil {
+		respondFail(w, 404, "Invalid user id", err)
+		return
+	}
+
+	// Authorization
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondFail(w, 401, "Failed to retrieve bearer token", err)
+		return
+	}
+
+	subject, err := auth.ValidateJWT(token, cfg.secret)
+	if err != nil {
+		respondFail(w, 401, "Couldn't validate token", err)
+		return
+	}
+
+	if subject != user.ID {
+		respondFail(w, 401, "Unauthorized access", nil)
+		return
+	}
+
+	// Query database
 	query := database.CreateRecipeParams{
 		Title: req.Title,
-		UserID: req.UserID,
+		UserID: user.ID,
 	}
 
 	recipe, err := cfg.db.CreateRecipe(r.Context(), query)
 	if err != nil {
-		respondFail(w, 404, "Couldn't create recipe: does user_id exist?", err)
+		respondFail(w, 404, "Couldn't create recipe", err)
 		return
 	}
 
@@ -81,6 +109,7 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 		})
 	}
 	
+	// Response
 	res := recipeResponse{
 		ID: recipe.ID,
 		Title: recipe.Title,

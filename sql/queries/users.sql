@@ -14,3 +14,7 @@ WHERE email = $1;
 
 -- name: ResetUsers :exec
 DELETE FROM users;
+
+-- name: GetUser :one
+SELECT id, created_at, updated_at, email FROM USERS
+WHERE id = $1;
