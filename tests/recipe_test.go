@@ -25,7 +25,7 @@ func TestRecipe(t *testing.T) {
 
 	// make recipes
 	cases := [][]byte{
-		[]byte(fmt.Sprintf(`{"title": "an-awesome-recipe", "user_id": "%s"}`, user.ID)),
+		[]byte(fmt.Sprintf(`{"title": "an-awesome-recipe", "user_id": "%s", "ingredients": [{"name": "flour", "quantity": 2, "unit": "cups"}, {"name": "water", "quantity": 1.25, "unit": "tablespoons"}]}`, user.ID)),
 	}
 
 	for _, req := range cases {
@@ -39,6 +39,12 @@ func TestRecipe(t *testing.T) {
 			ID	uuid.UUID `json:"id"`
 			Title	string `json:"title"`
 			UserID	uuid.UUID `json:"user_id"`
+			Ingredients []struct{
+				Name	string `json:"name"`
+				Quantity float32 `json:"quantity"`
+				Unit	string `json:"unit"`
+				RecipeID uuid.UUID `json:"recipe_id"`
+			} `json:"ingredients"`
 		}
 		if err := decoder.Decode(&recipe); err != nil {
 			t.Fatalf("Failed to decode response: %v", err)
