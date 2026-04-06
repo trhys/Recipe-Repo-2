@@ -91,7 +91,10 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if match {
-		respondJSON(w, 201, nil)
+		respondJSON(w, 201, loginResponse{
+			ID: user.ID,
+			Email: req.Email,
+		})
 		return
 	} else {
 		respondJSON(w, 401, nil)
