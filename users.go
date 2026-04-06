@@ -10,6 +10,7 @@ import (
 	"github.com/trhys/Recipe-Repo-2/internal/auth"
 )
 
+// Create user
 type createUserRequest struct {
 	Email		string `json:"email"`
 	Password	string `json:"password"`
@@ -37,7 +38,6 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	query := database.CreateUserParams{
-		ID: uuid.New(),
 		Email: req.Email,
 		HashedPw: hash,
 	}
@@ -55,4 +55,62 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	respondJSON(w, 201, res)
+}
+
+
+// User login
+type loginRequest struct {
+	Email		string `json:"email"`
+	Password	string `json:"password"`
+}
+
+type loginResponse struct {
+	ID		uuid.UUID `json:"id"`
+	Email		string `json:"email"`
+}
+
+func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var req loginRequest
+
+	if err := decoder.Decode(&req); err != nil {
+		respondFail(w, 500, "Failed to decode response body", err)
+		return
+	}
+
+	user, err := cfg.db.GetUserHash(r.Context(), req.Email)
+	if err != nil {
+		respondFail(w, 404, "User not found", err)
+		return
+	}
+
+	match, err := auth.CheckPasswordHash(req.Password, user.HashedPw)
+	if err != nil {
+		respondFail(w, 500, "Something went wrong during authentication", err)
+		return
+	}
+
+	if match {
+		respondJSON(w, 201, nil)
+		return
+	} else {
+		respondJSON(w, 401, nil)
+		return
+	}
+}
+
+// Reset users in dev mode
+func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
+	if cfg.platform != "dev" {
+		respondFail(w, 401, "Must be in dev mode to reset users!", nil)
+		return
+	}
+
+	err := cfg.db.ResetUsers(r.Context())
+	if err != nil {
+		respondFail(w, 500, "Something went wrong during users reset", err)
+		return
+	}
+
+	respondJSON(w, 201, nil)
 }

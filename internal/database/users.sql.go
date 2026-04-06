@@ -15,16 +15,15 @@ import (
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (id, created_at, updated_at, email, hashed_pw)
 VALUES (
+	gen_random_uuid(),
+	NOW(),
+	NOW(),
 	$1,
-	NOW(),
-	NOW(),
-	$2,
-	$3
+	$2
 ) RETURNING id, created_at, email
 `
 
 type CreateUserParams struct {
-	ID       uuid.UUID
 	Email    string
 	HashedPw string
 }
@@ -36,8 +35,34 @@ type CreateUserRow struct {
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.ID, arg.Email, arg.HashedPw)
+	row := q.db.QueryRowContext(ctx, createUser, arg.Email, arg.HashedPw)
 	var i CreateUserRow
 	err := row.Scan(&i.ID, &i.CreatedAt, &i.Email)
 	return i, err
+}
+
+const getUserHash = `-- name: GetUserHash :one
+SELECT id, hashed_pw FROM users
+WHERE email = $1
+`
+
+type GetUserHashRow struct {
+	ID       uuid.UUID
+	HashedPw string
+}
+
+func (q *Queries) GetUserHash(ctx context.Context, email string) (GetUserHashRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserHash, email)
+	var i GetUserHashRow
+	err := row.Scan(&i.ID, &i.HashedPw)
+	return i, err
+}
+
+const resetUsers = `-- name: ResetUsers :exec
+DELETE FROM users
+`
+
+func (q *Queries) ResetUsers(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, resetUsers)
+	return err
 }

@@ -19,6 +19,11 @@ func main() {
 		log.Fatal("Failed to load database: url missing")
 	}
 
+	platform := os.Getenv("PLATFORM")
+	if platform == "" {
+		log.Fatal("Failed to load platform config")
+	}
+
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
 		log.Fatal("Failed to load database: connection failed")
@@ -28,6 +33,7 @@ func main() {
 	
 	config := apiConfig{
 		db: database.New(db),
+		platform: platform,
 	}
 
 	log.Print("Successfully loaded database...")
@@ -43,6 +49,8 @@ func main() {
 	// Handlers
 
 	mux.HandleFunc("POST /api/new_user", config.handlerCreateUser)
+	mux.HandleFunc("POST /api/login", config.handlerLogin)
+	mux.HandleFunc("POST /api/reset", config.handlerReset)
 
 	log.Print("Successfully loaded server config...")
 

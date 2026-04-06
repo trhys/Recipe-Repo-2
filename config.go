@@ -5,5 +5,6 @@ import (
 )
 
 type apiConfig struct {
-	db	*database.Queries
+	db		*database.Queries
+	platform	string
 }
