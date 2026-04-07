@@ -12,3 +12,8 @@ RETURNING *;
 -- name: GetRecipe :one
 SELECT * FROM recipes
 WHERE id = $1;
+
+-- name: GetRecipeList :many
+SELECT * FROM recipes
+ORDER BY created_at DESC
+LIMIT 10;

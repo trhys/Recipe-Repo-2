@@ -10,31 +10,42 @@
         The Recipe Repository
       </h1>
           <button id="logout-button" onclick="logout()">Logout</button>
+          <button id="login-btn" type="button" onclick="window.location.href='/app/login'">Login</button>
+          <button id="signup-btn" type="button" onclick="window.location.href='/app/signup'">Sign Up</button>
     </div>
 <p>Welcome to The Recipe Repository!</p>
 <p>This will be a recipe sharing and shopping planner application.</p>
-  <div id="auth-section">
-      <h2>Login</h2>
-      <form id="login-form">
+
+  <div id="recipes-section">
+    <h3>
+      Recipes
+    </h3>
+    <ul id="recipes"></ul>
+    
+    <form id="recipe-creator">
+      <h4>
+        Create New Recipe
+      </h4>
         <input
           class="input-area"
-          type="email"
-          id="email"
-          placeholder="Email"
+          type="text"
+          id="recipe-title"
+          placeholder="Title"
           required
-        />
-        <input
-          class="input-area"
-          type="password"
-          id="password"
-          placeholder="Password"
-          required
-        />
-        <div class="button-container">
-          <button type="submit">Login</button>
-          <button onclick="signup()" type="button">Signup</button>
+        /><br />
+      <div id="ingredients-wrapper">
+        <div class="ingredient-row" style="margin-top: 10px;">
+          <input class="input-area" type="text" name="name" placeholder="name (flour)" required />
+          <input class="input-area" type="number" step="any" name="quantity" placeholder="qty (1)" required />
+          <input class="input-area" type="text" name="unit" placeholder="unit (cup)" required />
+          <button type="button" class="remove-btn">×</button>
         </div>
-      </form>
-    </div>
+      </div>
+	<div class="button-container" style="margin-top: 5px;">
+          <button type="submit">Submit</button>
+        <button type="button" id="add-ingredient">Add Ingredient</button>
+        </div>
+    </form>
+  </div>
 </body>
 </html>

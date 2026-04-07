@@ -167,3 +167,43 @@ func (cfg *apiConfig) handlerGetRecipe(w http.ResponseWriter, r *http.Request) {
 
 	respondJSON(w, 200, res)
 }
+
+// Get ten most recent recipes
+type recipe struct{
+	ID		uuid.UUID `json:"id"`
+	Title		string `json:"title"`
+	CreatedAt	time.Time `json:"created_at"`
+	UpdatedAt	time.Time `json:"updated_at"`
+	Author		string `json:"author"`
+}
+
+type recipeList struct{
+	Recipes []recipe `json:"recipes"`
+}
+
+func (cfg *apiConfig) handlerGetRecipeList(w http.ResponseWriter, r *http.Request) {
+	recipes, err := cfg.db.GetRecipeList(r.Context())
+	if err != nil {
+		respondFail(w, 404, "Failed to retrieve recipe list", err)
+		return
+	}
+
+	list := recipeList{}
+	for _, rec := range recipes{
+		author, err := cfg.db.GetName(r.Context(), rec.UserID)
+		if err != nil {
+			respondFail(w, 404, "Couldn't resolve author", err)
+			return
+		}
+
+		list.Recipes = append(list.Recipes, recipe{
+			ID: rec.ID,
+			Title: rec.Title,
+			CreatedAt: rec.CreatedAt,
+			UpdatedAt: rec.UpdatedAt,
+			Author: author,
+		})
+	}
+
+	respondJSON(w, 200, list)
+}

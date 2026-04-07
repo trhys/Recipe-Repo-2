@@ -16,6 +16,7 @@ import (
 type createUserRequest struct {
 	Email		string `json:"email"`
 	Password	string `json:"password"`
+	Name		string `json:"name"`
 }
 
 type userResponse struct {
@@ -23,6 +24,7 @@ type userResponse struct {
 	CreatedAt	time.Time `json:"created_at"`
 	UpdatedAt	time.Time `json:"updated_at"`
 	Email		string `json:"email"`
+	Name		string `json:"name"`
 }
 
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -43,6 +45,7 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	query := database.CreateUserParams{
 		Email: req.Email,
 		HashedPw: hash,
+		Name: req.Name,
 	}
 
 	user, err := cfg.db.CreateUser(r.Context(), query)
@@ -56,8 +59,10 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.CreatedAt,
 		Email: user.Email,
+		Name: user.Name,
 	}
 
+	log.Printf("User created with email: %s", res.Email)
 	respondJSON(w, 201, res)
 }
 
@@ -151,6 +156,7 @@ func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		Email: user.Email,
+		Name: user.Name,
 	}
 
 	respondJSON(w, 200, res)

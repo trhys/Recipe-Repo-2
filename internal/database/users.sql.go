@@ -13,36 +13,56 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, created_at, updated_at, email, hashed_pw)
+INSERT INTO users (id, created_at, updated_at, email, hashed_pw, name)
 VALUES (
 	gen_random_uuid(),
 	NOW(),
 	NOW(),
 	$1,
-	$2
-) RETURNING id, created_at, email
+	$2,
+	$3
+) RETURNING id, created_at, email, name
 `
 
 type CreateUserParams struct {
 	Email    string
 	HashedPw string
+	Name     string
 }
 
 type CreateUserRow struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
 	Email     string
+	Name      string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Email, arg.HashedPw)
+	row := q.db.QueryRowContext(ctx, createUser, arg.Email, arg.HashedPw, arg.Name)
 	var i CreateUserRow
-	err := row.Scan(&i.ID, &i.CreatedAt, &i.Email)
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.Email,
+		&i.Name,
+	)
 	return i, err
 }
 
+const getName = `-- name: GetName :one
+SELECT name FROM users
+WHERE id = $1
+`
+
+func (q *Queries) GetName(ctx context.Context, id uuid.UUID) (string, error) {
+	row := q.db.QueryRowContext(ctx, getName, id)
+	var name string
+	err := row.Scan(&name)
+	return name, err
+}
+
 const getUser = `-- name: GetUser :one
-SELECT id, created_at, updated_at, email FROM USERS
+SELECT id, created_at, updated_at, email, name FROM USERS
 WHERE id = $1
 `
 
@@ -51,6 +71,7 @@ type GetUserRow struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Email     string
+	Name      string
 }
 
 func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (GetUserRow, error) {
@@ -61,6 +82,7 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (GetUserRow, error)
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Email,
+		&i.Name,
 	)
 	return i, err
 }
