@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -107,7 +108,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	} else {
-		respondJSON(w, 401, nil)
+		respondFail(w, 401, "Invalid username or password", fmt.Errorf("Invalid username or password"))
 		return
 	}
 }

@@ -36,6 +36,11 @@ func main() {
 		log.Fatal("Failed to load jwt duration")
 	}
 
+	appDirectory := os.Getenv("APP_DIR")
+	if appDirectory == "" {
+		log.Fatal("Failed to load app directory")
+	}
+
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
 		log.Fatal("Failed to load database: connection failed")
@@ -66,6 +71,10 @@ func main() {
 		Addr: ":8080",
 		Handler: mux,
 	}
+
+	// JS Fileserver handler
+	appHandler := http.StripPrefix("/app", http.FileServer(http.Dir(appDirectory)))
+	mux.Handle("/app/", appHandler)
 
 	// Handlers
 

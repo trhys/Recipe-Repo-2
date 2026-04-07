@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>The Recipe Repository</title>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="nav-bar">
+      <h1>
+        The Recipe Repository
+      </h1>
+          <button id="logout-button" onclick="logout()">Logout</button>
+    </div>
+<p>Welcome to The Recipe Repository!</p>
+<p>This will be a recipe sharing and shopping planner application.</p>
+  <div id="auth-section">
+      <h2>Login</h2>
+      <form id="login-form">
+        <input
+          class="input-area"
+          type="email"
+          id="email"
+          placeholder="Email"
+          required
+        />
+        <input
+          class="input-area"
+          type="password"
+          id="password"
+          placeholder="Password"
+          required
+        />
+        <div class="button-container">
+          <button type="submit">Login</button>
+          <button onclick="signup()" type="button">Signup</button>
+        </div>
+      </form>
+    </div>
+</body>
+</html>
