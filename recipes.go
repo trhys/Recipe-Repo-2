@@ -30,6 +30,7 @@ type recipeResponse struct {
 	UserID		uuid.UUID `json:"user_id"`
 	Ingredients	[]ingredient `json:"ingredients"`
 	Author		string `json:"author"`
+	Description	string `json:"description"`
 }
 
 func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request) {
@@ -43,6 +44,7 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 			Quantity	float32 `json:"quantity"`
 			Unit		string `json:"unit"`
 		} `json:"ingredients"`
+		Description string `json:"description"`
 	}
 	if err := decoder.Decode(&req); err != nil {
 		respondFail(w, 500, "Failed to decode request body", err)
@@ -78,6 +80,7 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 	query := database.CreateRecipeParams{
 		Title: req.Title,
 		UserID: user.ID,
+		Description: req.Description,
 	}
 
 	recipe, err := cfg.db.CreateRecipe(r.Context(), query)
@@ -121,6 +124,7 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 		UserID: recipe.UserID,
 		Ingredients: ingredients,
 		Author: user.Name,
+		Description: recipe.Description,
 	}
 
 	respondJSON(w, 201, res)
@@ -175,6 +179,7 @@ func (cfg *apiConfig) handlerGetRecipe(w http.ResponseWriter, r *http.Request) {
 		UserID: recipe.UserID,
 		Ingredients: ingredients,
 		Author: author,
+		Description: recipe.Description,
 	}
 
 	respondJSON(w, 200, res)
@@ -228,6 +233,7 @@ func (cfg *apiConfig) appGetRecipe(w http.ResponseWriter, r *http.Request) {
 		UserID: recipe.UserID,
 		Ingredients: ingredients,
 		Author: author,
+		Description: recipe.Description,
 	}
 	
 	tmpl, _ := template.ParseFiles(filepath.Join("app", "templates", "recipe-viewer.html"))
@@ -240,6 +246,7 @@ type recipe struct{
 	Title		string `json:"title"`
 	CreatedAt	time.Time `json:"created_at"`
 	UpdatedAt	time.Time `json:"updated_at"`
+	UserID		uuid.UUID `json:"user_id"`
 	Author		string `json:"author"`
 }
 
@@ -267,9 +274,93 @@ func (cfg *apiConfig) handlerGetRecipeList(w http.ResponseWriter, r *http.Reques
 			Title: rec.Title,
 			CreatedAt: rec.CreatedAt,
 			UpdatedAt: rec.UpdatedAt,
+			UserID: rec.UserID,
 			Author: author,
 		})
 	}
 
 	respondJSON(w, 200, list)
+}
+
+// Get all recipes for user_id
+type userRecipeList struct{
+	Recipes []recipe `json:"recipes"`
+	Name	string `json:"name"`
+}
+
+func (cfg *apiConfig) handlerGetUsersRecipes(w http.ResponseWriter, r *http.Request) {
+	val := r.PathValue("user_id")
+	id, err := uuid.Parse(val)
+	if err != nil {
+		respondFail(w, 404, "Invalid uuid", err)
+		return
+	}
+
+	user, err := cfg.db.GetUser(r.Context(), id)
+	if err != nil {
+		respondFail(w, 404, "Couldn't find user", err)
+		return
+	}
+
+	recipes, err := cfg.db.GetUsersRecipes(r.Context(), user.ID)
+	if err != nil {
+		respondFail(w, 404, "Couldn't find recipes", err)
+		return
+	}
+
+	list := userRecipeList{}
+	for _, rec := range recipes {
+		list.Recipes = append(list.Recipes, recipe{
+			ID: rec.ID,
+			Title: rec.Title,
+			CreatedAt: rec.CreatedAt,
+			UpdatedAt: rec.UpdatedAt,
+			UserID: rec.UserID,
+			Author: user.Name,
+		})
+	}
+	list.Name = user.Name
+
+	respondJSON(w, 200, list)
+}
+
+func (cfg *apiConfig) appGetUsersRecipes(w http.ResponseWriter, r *http.Request) {
+	val := r.PathValue("user_id")
+	id, err := uuid.Parse(val)
+	if err != nil {
+		respondFail(w, 404, "Invalid uuid", err)
+		return
+	}
+
+	user, err := cfg.db.GetUser(r.Context(), id)
+	if err != nil {
+		respondFail(w, 404, "Couldn't find user", err)
+		return
+	}
+
+	recipes, err := cfg.db.GetUsersRecipes(r.Context(), user.ID)
+	if err != nil {
+		respondFail(w, 404, "Couldn't find recipes", err)
+		return
+	}
+
+	list := userRecipeList{}
+	for _, rec := range recipes {
+		list.Recipes = append(list.Recipes, recipe{
+			ID: rec.ID,
+			Title: rec.Title,
+			CreatedAt: rec.CreatedAt,
+			UpdatedAt: rec.UpdatedAt,
+			Author: user.Name,
+		})
+	}
+	list.Name = user.Name
+
+	tmpl, err := template.ParseFiles(filepath.Join("app", "templates", "user_page.html"))
+	if err != nil {
+		respondFail(w, 500, "Something went wrong", err)
+		return
+	}
+
+	tmpl.Execute(w, list)
 }

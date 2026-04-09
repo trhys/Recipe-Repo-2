@@ -12,24 +12,26 @@ import (
 )
 
 const createRecipe = `-- name: CreateRecipe :one
-INSERT INTO recipes (id, title, created_at, updated_at, user_id)
+INSERT INTO recipes (id, title, created_at, updated_at, user_id, description)
 VALUES(
 	gen_random_uuid(),
 	$1,
 	NOW(),
 	NOW(),
-	$2
+	$2,
+	$3
 )
-RETURNING id, title, created_at, updated_at, user_id
+RETURNING id, title, created_at, updated_at, user_id, description
 `
 
 type CreateRecipeParams struct {
-	Title  string
-	UserID uuid.UUID
+	Title       string
+	UserID      uuid.UUID
+	Description string
 }
 
 func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Recipe, error) {
-	row := q.db.QueryRowContext(ctx, createRecipe, arg.Title, arg.UserID)
+	row := q.db.QueryRowContext(ctx, createRecipe, arg.Title, arg.UserID, arg.Description)
 	var i Recipe
 	err := row.Scan(
 		&i.ID,
@@ -37,12 +39,13 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Rec
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.UserID,
+		&i.Description,
 	)
 	return i, err
 }
 
 const getRecipe = `-- name: GetRecipe :one
-SELECT id, title, created_at, updated_at, user_id FROM recipes
+SELECT id, title, created_at, updated_at, user_id, description FROM recipes
 WHERE id = $1
 `
 
@@ -55,12 +58,13 @@ func (q *Queries) GetRecipe(ctx context.Context, id uuid.UUID) (Recipe, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.UserID,
+		&i.Description,
 	)
 	return i, err
 }
 
 const getRecipeList = `-- name: GetRecipeList :many
-SELECT id, title, created_at, updated_at, user_id FROM recipes
+SELECT id, title, created_at, updated_at, user_id, description FROM recipes
 ORDER BY created_at DESC
 LIMIT 10
 `
@@ -80,6 +84,43 @@ func (q *Queries) GetRecipeList(ctx context.Context) ([]Recipe, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.UserID,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUsersRecipes = `-- name: GetUsersRecipes :many
+SELECT id, title, created_at, updated_at, user_id, description FROM recipes
+WHERE user_id = $1
+ORDER BY created_at DESC
+`
+
+func (q *Queries) GetUsersRecipes(ctx context.Context, userID uuid.UUID) ([]Recipe, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersRecipes, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Recipe
+	for rows.Next() {
+		var i Recipe
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserID,
+			&i.Description,
 		); err != nil {
 			return nil, err
 		}

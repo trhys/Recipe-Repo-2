@@ -7,35 +7,46 @@ document.addEventListener('DOMContentLoaded', async () => {
   signupBtn = document.getElementById('signup-btn')
   logoutBtn = document.getElementById('logout-button')
   recipeCreator = document.getElementById('recipe-creator')
+  createNew = document.getElementById('create-new')
+  recipeList = document.getElementById('recipes-section')
 
-  if (token) {
-	  if (loginBtn) {
-    		loginBtn.style.display = 'none';
+  if (loginBtn) {
+	  if (token) {
+		loginBtn.style.display = 'none';
+	  } else {
+		loginBtn.style.display = 'block';
 	  }
-	  if (signupBtn) {
-    		signupBtn.style.display = 'none';
-	  }
-	  if (logoutBtn) {
-    		logoutBtn.style.display = 'block';
-	  }
-	  if (recipeCreator) {
-    		recipeCreator.style.display = 'block';
-		await getRecipes();
-	  }
-  } else {
-	  if (loginBtn) {
-    		loginBtn.style.display = 'block';
-	  }
-	  if (signupBtn) {
-    		signupBtn.style.display = 'block';
-	  }
-	  if (logoutBtn) {
-    		logoutBtn.style.display = 'none';
-	  }
-	  if (recipeCreator) {
-    		recipeCreator.style.display = 'none';
-		await getRecipes();
-	  }
+  }
+  if (signupBtn) {
+	if (token) {
+		signupBtn.style.display = 'none';
+	} else {
+		signupBtn.style.display = 'block';
+	}
+  }
+  if (logoutBtn) {
+	if (token) {
+		logoutBtn.style.display = 'block';
+	} else {
+		logoutBtn.style.display = 'none';
+	}
+  }
+  if (recipeCreator) {
+	if (token) {
+		recipeCreator.style.display = 'block';
+	} else {
+		recipeCreator.style.display = 'none';
+	}
+  }
+  if (createNew) {
+	if (token) {
+		createNew.style.display = 'block';
+	} else {
+		createNew.style.display = 'none';
+	}
+  }
+  if (recipeList) {
+	  await getRecipes();
   }
 });
 
@@ -139,7 +150,8 @@ async function getRecipes() {
 	<a href="/app/recipes/${recipe.id}">
       	<h4>${recipe.title}</h4></a>
 	<p>Created: ${displayDate}</p>
-	<h5>Author: ${recipe.author}</h5>
+	<a href="/app/recipes/by_user/${recipe.user_id}">
+	<h5>Author: ${recipe.author}</h5></a>
       </div>`;
       recipeList.appendChild(listItem);
     }
@@ -189,7 +201,8 @@ if (recipeCreator) {
 			const recipeData = {
 				title: document.getElementById('recipe-title').value,
 				user_id: localStorage.getItem('user_id'),
-				ingredients: []
+				ingredients: [],
+				description: document.getElementById('author-description').value
 			};
 
 			const rows = document.querySelectorAll('.ingredient-row')
