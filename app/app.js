@@ -136,7 +136,8 @@ async function getRecipes() {
       const displayDate = new Date(recipe.created_at).toLocaleDateString();
       listItem.innerHTML = `
       <div class="card-content">
-      	<h4>${recipe.title}</h4>
+	<a href="/app/recipes/${recipe.id}">
+      	<h4>${recipe.title}</h4></a>
 	<p>Created: ${displayDate}</p>
 	<h5>Author: ${recipe.author}</h5>
       </div>`;
@@ -197,7 +198,7 @@ if (recipeCreator) {
 				const ingredient = {
 					name: row.querySelector('input[name="name"]').value,
 					quantity: parseFloat(row.querySelector('input[name="quantity"]').value),
-					unit: row.querySelector('input[name="unit"]').value
+					unit: row.querySelector('select[name="unit"]').value
 				};
 				recipeData.ingredients.push(ingredient);
 			});

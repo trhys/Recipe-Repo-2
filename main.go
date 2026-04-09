@@ -77,6 +77,7 @@ func main() {
 	mux.Handle("/app/", appHandler)
 
 	// Handlers
+	mux.HandleFunc("GET /app/recipes/{recipe_id}", config.appGetRecipe)
 
 	mux.HandleFunc("GET /api/users/{user_id}", config.handlerGetUser)
 	mux.HandleFunc("POST /api/new_user", config.handlerCreateUser)

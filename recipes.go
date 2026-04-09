@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"path/filepath"
+	"html/template"
 	"net/http"
 	"time"
 
@@ -27,6 +29,7 @@ type recipeResponse struct {
 	UpdatedAt	time.Time `json:"updated_at"`
 	UserID		uuid.UUID `json:"user_id"`
 	Ingredients	[]ingredient `json:"ingredients"`
+	Author		string `json:"author"`
 }
 
 func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request) {
@@ -117,12 +120,14 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 		UpdatedAt: recipe.UpdatedAt,
 		UserID: recipe.UserID,
 		Ingredients: ingredients,
+		Author: user.Name,
 	}
 
 	respondJSON(w, 201, res)
 }
 
 // Get recipe by ID
+// API endpoint
 func (cfg *apiConfig) handlerGetRecipe(w http.ResponseWriter, r *http.Request) {
 	requested := r.PathValue("recipe_id")
 	recipe_id, err := uuid.Parse(requested)
@@ -140,6 +145,12 @@ func (cfg *apiConfig) handlerGetRecipe(w http.ResponseWriter, r *http.Request) {
 	i, err := cfg.db.GetIngredientList(r.Context(), recipe_id)
 	if err != nil {
 		respondFail(w, 404, "Couldn't find ingredients", err)
+		return
+	}
+
+	author, err := cfg.db.GetName(r.Context(), recipe.UserID)
+	if err != nil {
+		respondFail(w, 404, "Couldn't find author", err)
 		return
 	}
 
@@ -163,10 +174,65 @@ func (cfg *apiConfig) handlerGetRecipe(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt: recipe.UpdatedAt,
 		UserID: recipe.UserID,
 		Ingredients: ingredients,
+		Author: author,
 	}
 
 	respondJSON(w, 200, res)
 }
+
+// App endpoint
+func (cfg *apiConfig) appGetRecipe(w http.ResponseWriter, r *http.Request) {
+	requested := r.PathValue("recipe_id")
+	recipe_id, err := uuid.Parse(requested)
+	if err != nil {
+		respondFail(w, 404, "Invalid recipe id", err)
+		return
+	}
+
+	recipe, err := cfg.db.GetRecipe(r.Context(), recipe_id)
+	if err != nil {
+		respondFail(w, 404, "Couldn't find recipe id", err)
+		return
+	}
+
+	i, err := cfg.db.GetIngredientList(r.Context(), recipe_id)
+	if err != nil {
+		respondFail(w, 404, "Couldn't find ingredients", err)
+		return
+	}
+
+	author, err := cfg.db.GetName(r.Context(), recipe.UserID)
+	if err != nil {
+		respondFail(w, 404, "Couldn't find author", err)
+		return
+	}
+
+	ingredients := []ingredient{}
+	for _, ing := range i {
+		ingredients = append(ingredients, ingredient{
+			ID: ing.ID,
+			Name: ing.Name,
+			Quantity: ing.Quantity,
+			Unit: ing.Unit,
+			CreatedAt: ing.CreatedAt,
+			UpdatedAt: ing.UpdatedAt,
+			RecipeID: ing.RecipeID,
+		})
+	}
+
+	data := recipeResponse{
+		ID: recipe.ID,
+		Title: recipe.Title,
+		CreatedAt: recipe.CreatedAt,
+		UpdatedAt: recipe.UpdatedAt,
+		UserID: recipe.UserID,
+		Ingredients: ingredients,
+		Author: author,
+	}
+	
+	tmpl, _ := template.ParseFiles(filepath.Join("app", "templates", "recipe-viewer.html"))
+	tmpl.Execute(w, data)
+}	
 
 // Get ten most recent recipes
 type recipe struct{

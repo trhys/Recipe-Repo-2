@@ -2,7 +2,8 @@
 <html>
 <head>
 <title>The Recipe Repository</title>
-  <script src="app.js" defer></script>
+<script src="app.js" defer></script>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="nav-bar">
@@ -37,7 +38,13 @@
         <div class="ingredient-row" style="margin-top: 10px;">
           <input class="input-area" type="text" name="name" placeholder="name (flour)" required />
           <input class="input-area" type="number" step="any" name="quantity" placeholder="qty (1)" required />
-          <input class="input-area" type="text" name="unit" placeholder="unit (cup)" required />
+          <label for="unit">Unit:</label>
+		<select name="unit" id="cars">
+		  <option value="cup">Cups</option>
+		  <option value="tablespoon">Tablespoons</option>
+		  <option value="teaspoon">Teaspoons</option>
+		  <option value="gram">Grams</option>
+		</select>
           <button type="button" class="remove-btn">×</button>
         </div>
       </div>
