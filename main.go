@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -11,6 +12,8 @@ import (
 	_ "github.com/lib/pq"
         "github.com/joho/godotenv"
 	"github.com/trhys/Recipe-Repo-2/internal/database"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/config"
 )
 
 func main() {
@@ -36,22 +39,44 @@ func main() {
 		log.Fatal("Failed to load jwt duration")
 	}
 
-	appDirectory := os.Getenv("APP_DIR")
-	if appDirectory == "" {
-		log.Fatal("Failed to load app directory")
-	}
-
-	db, err := sql.Open("postgres", dbUrl)
-	if err != nil {
-		log.Fatal("Failed to load database: connection failed")
-	}
-
 	convDur, err := strconv.Atoi(jwtDur)
 	if err != nil {
 		log.Print("Failed to load jwt duration - defaulting to 3600")
 		convDur = 3600
 	}
 	jwtDuration := time.Duration(convDur)*time.Second
+
+
+	appDirectory := os.Getenv("APP_DIR")
+	if appDirectory == "" {
+		log.Fatal("Failed to load app directory")
+	}
+	
+	s3bucket := os.Getenv("S3_BUCKET")
+	if s3bucket == "" {
+		log.Fatal("Failed to load s3 bucket")
+	}
+
+	s3region := os.Getenv("S3_REGION")
+	if err != nil {
+		log.Fatal("Failed to load s3 region")
+	}
+
+	// Connect to database
+	db, err := sql.Open("postgres", dbUrl)
+	if err != nil {
+		log.Fatal("Failed to load database: connection failed")
+	}
+
+	log.Print("Successfully loaded database...")
+
+	// Load S3 client
+	s3cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(s3region))
+	if err != nil {
+		log.Fatal("Failed to load s3 config")
+	}
+
+	log.Print("Successfully loaded s3 config...")
 
 	// Load api config
 	
@@ -60,10 +85,12 @@ func main() {
 		platform: platform,
 		secret: secret,
 		jwtDuration: jwtDuration,
+		s3client: s3.NewFromConfig(s3cfg) ,
+		s3bucket: s3bucket,
+		s3region: s3region,
 	}
 
-	log.Print("Successfully loaded database...")
-
+	
 	// Load server
 
 	mux := http.NewServeMux()
@@ -90,7 +117,7 @@ func main() {
 	mux.HandleFunc("GET /api/recipes", config.handlerGetRecipeList)
 	mux.HandleFunc("POST /api/new_recipe", config.handlerCreateRecipe)
 
-	log.Print("Successfully loaded server config...")
+	log.Print("Successfully loaded server...")
 
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatal(err)
