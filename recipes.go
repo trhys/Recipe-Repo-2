@@ -2,12 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
+	"os"
 	"path/filepath"
 	"html/template"
+	"mime"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/trhys/Recipe-Repo-2/internal/database"
 	"github.com/trhys/Recipe-Repo-2/internal/auth"
 )
@@ -31,12 +36,17 @@ type recipeResponse struct {
 	Ingredients	[]ingredient `json:"ingredients"`
 	Author		string `json:"author"`
 	Description	string `json:"description"`
-	ImageLink	string `json:"image_link"`
+	ImageKey	string `json:"image_key"`
+}
+
+type appResponse struct {
+	recipeResponse
+	ImageURL	string `json:"image_url"`
 }
 
 func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request) {
 	// Request
-	decoder := json.NewDecoder(r.Body)
+	r.Body = http.MaxBytesReader(w, r.Body, 10 << 20)
 	var req struct{
 		Title string `json:"title"`
 		UserID uuid.UUID `json:"user_id"`
@@ -46,10 +56,14 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 			Unit		string `json:"unit"`
 		} `json:"ingredients"`
 		Description string `json:"description"`
-		ImageLink string `json:"image_link"`
 	}
-	if err := decoder.Decode(&req); err != nil {
-		respondFail(w, 500, "Failed to decode request body", err)
+
+	// Get request payload 
+	jsonString := r.FormValue("payload")
+
+	// Unmarshal JSON
+	if err := json.Unmarshal([]byte(jsonString), &req); err != nil {
+		respondFail(w, 500, "Failed to unmarshal payload", err)
 		return
 	}
 
@@ -78,12 +92,63 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Request is valid - begin processing image file
+	file, fileHeader, err := r.FormFile("image")
+	key := uuid.New().String()
+	if err == nil {
+		defer file.Close()
+	
+		mediaType, _, err := mime.ParseMediaType(fileHeader.Header.Get("Content-Type"))
+		if err != nil {
+			respondFail(w, 401, "Couldn't parse media type", err)
+			return
+		}
+
+		if mediaType != "image/jpeg" && mediaType != "image/png" {
+			respondFail(w, 401, "Invalid media type", fmt.Errorf("Must be jpg or png. Got: %s", mediaType))
+			return
+		}
+
+		tmp, err := os.CreateTemp("", "image_upload")
+		if err != nil {
+			respondFail(w, 500, "Something went wrong", err)
+			return
+		}
+		defer os.Remove(tmp.Name())
+		defer tmp.Close()
+
+		_, fail := io.Copy(tmp, file)
+		if fail != nil {
+			respondFail(w, 500, "Couldn't save image", err)
+			return
+		}
+
+		tmp.Seek(0, io.SeekStart)
+
+		// Upload to s3
+		if _, err := cfg.s3client.PutObject(r.Context(), &s3.PutObjectInput{
+			Bucket: &cfg.s3bucket,
+			Key: &key,
+			Body: tmp,
+			ContentType: &mediaType,
+		}); err != nil {
+			respondFail(w, 500, "Failed to upload to s3 bucket", err)
+			return
+		}
+
+	} else if err != nil {
+		if err != http.ErrMissingFile {
+			respondFail(w, 500, "Something went wrong during upload", err)
+			return
+		}
+	}
+
 	// Query database
 	query := database.CreateRecipeParams{
 		Title: req.Title,
 		UserID: user.ID,
 		Description: req.Description,
-		ImageLink: req.ImageLink,
+		ImageKey: key,
 	}
 
 	recipe, err := cfg.db.CreateRecipe(r.Context(), query)
@@ -128,7 +193,7 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 		Ingredients: ingredients,
 		Author: user.Name,
 		Description: recipe.Description,
-		ImageLink: recipe.ImageLink,
+		ImageKey: recipe.ImageKey,
 	}
 
 	respondJSON(w, 201, res)
@@ -184,7 +249,7 @@ func (cfg *apiConfig) handlerGetRecipe(w http.ResponseWriter, r *http.Request) {
 		Ingredients: ingredients,
 		Author: author,
 		Description: recipe.Description,
-		ImageLink: recipe.ImageLink,
+		ImageKey: recipe.ImageKey,
 	}
 
 	respondJSON(w, 200, res)
@@ -230,16 +295,19 @@ func (cfg *apiConfig) appGetRecipe(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	data := recipeResponse{
-		ID: recipe.ID,
-		Title: recipe.Title,
-		CreatedAt: recipe.CreatedAt,
-		UpdatedAt: recipe.UpdatedAt,
-		UserID: recipe.UserID,
-		Ingredients: ingredients,
-		Author: author,
-		Description: recipe.Description,
-		ImageLink: recipe.ImageLink,
+	data := appResponse{
+		recipeResponse: recipeResponse{
+			ID: recipe.ID,
+			Title: recipe.Title,
+			CreatedAt: recipe.CreatedAt,
+			UpdatedAt: recipe.UpdatedAt,
+			UserID: recipe.UserID,
+			Ingredients: ingredients,
+			Author: author,
+			Description: recipe.Description,
+			ImageKey: recipe.ImageKey,
+		},
+		ImageURL: fmt.Sprintf("%s/%s", cfg.s3cdn, recipe.ImageKey),
 	}
 	
 	tmpl, _ := template.ParseFiles(filepath.Join("app", "templates", "recipe-viewer.html"))
@@ -254,7 +322,8 @@ type recipe struct{
 	UpdatedAt	time.Time `json:"updated_at"`
 	UserID		uuid.UUID `json:"user_id"`
 	Author		string `json:"author"`
-	ImageLink	string `json:"image_link"`
+	ImageKey	string `json:"image_key"`
+	ImageURL	string `json:"image_url"`
 }
 
 type recipeList struct{
@@ -283,7 +352,8 @@ func (cfg *apiConfig) handlerGetRecipeList(w http.ResponseWriter, r *http.Reques
 			UpdatedAt: rec.UpdatedAt,
 			UserID: rec.UserID,
 			Author: author,
-			ImageLink: rec.ImageLink,
+			ImageKey: rec.ImageKey,
+			ImageURL: fmt.Sprintf("%s/%s", cfg.s3cdn, rec.ImageKey),
 		})
 	}
 
@@ -325,7 +395,8 @@ func (cfg *apiConfig) handlerGetUsersRecipes(w http.ResponseWriter, r *http.Requ
 			UpdatedAt: rec.UpdatedAt,
 			UserID: rec.UserID,
 			Author: user.Name,
-			ImageLink: rec.ImageLink,
+			ImageKey: rec.ImageKey,
+			ImageURL: fmt.Sprintf("%s/%s", cfg.s3cdn, rec.ImageKey),
 		})
 	}
 	list.Name = user.Name
@@ -361,7 +432,8 @@ func (cfg *apiConfig) appGetUsersRecipes(w http.ResponseWriter, r *http.Request)
 			CreatedAt: rec.CreatedAt,
 			UpdatedAt: rec.UpdatedAt,
 			Author: user.Name,
-			ImageLink: rec.ImageLink,
+			ImageKey: rec.ImageKey,
+			ImageURL: fmt.Sprintf("%s/%s", cfg.s3cdn, rec.ImageKey),
 		})
 	}
 	list.Name = user.Name

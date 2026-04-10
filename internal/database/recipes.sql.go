@@ -12,7 +12,7 @@ import (
 )
 
 const createRecipe = `-- name: CreateRecipe :one
-INSERT INTO recipes (id, title, created_at, updated_at, user_id, description, image_link)
+INSERT INTO recipes (id, title, created_at, updated_at, user_id, description, image_key)
 VALUES(
 	gen_random_uuid(),
 	$1,
@@ -22,14 +22,14 @@ VALUES(
 	$3,
 	$4
 )
-RETURNING id, title, created_at, updated_at, user_id, description, image_link
+RETURNING id, title, created_at, updated_at, user_id, description, image_key
 `
 
 type CreateRecipeParams struct {
 	Title       string
 	UserID      uuid.UUID
 	Description string
-	ImageLink   string
+	ImageKey    string
 }
 
 func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Recipe, error) {
@@ -37,7 +37,7 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Rec
 		arg.Title,
 		arg.UserID,
 		arg.Description,
-		arg.ImageLink,
+		arg.ImageKey,
 	)
 	var i Recipe
 	err := row.Scan(
@@ -47,13 +47,13 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Rec
 		&i.UpdatedAt,
 		&i.UserID,
 		&i.Description,
-		&i.ImageLink,
+		&i.ImageKey,
 	)
 	return i, err
 }
 
 const getRecipe = `-- name: GetRecipe :one
-SELECT id, title, created_at, updated_at, user_id, description, image_link FROM recipes
+SELECT id, title, created_at, updated_at, user_id, description, image_key FROM recipes
 WHERE id = $1
 `
 
@@ -67,13 +67,13 @@ func (q *Queries) GetRecipe(ctx context.Context, id uuid.UUID) (Recipe, error) {
 		&i.UpdatedAt,
 		&i.UserID,
 		&i.Description,
-		&i.ImageLink,
+		&i.ImageKey,
 	)
 	return i, err
 }
 
 const getRecipeList = `-- name: GetRecipeList :many
-SELECT id, title, created_at, updated_at, user_id, description, image_link FROM recipes
+SELECT id, title, created_at, updated_at, user_id, description, image_key FROM recipes
 ORDER BY created_at DESC
 LIMIT 10
 `
@@ -94,7 +94,7 @@ func (q *Queries) GetRecipeList(ctx context.Context) ([]Recipe, error) {
 			&i.UpdatedAt,
 			&i.UserID,
 			&i.Description,
-			&i.ImageLink,
+			&i.ImageKey,
 		); err != nil {
 			return nil, err
 		}
@@ -110,7 +110,7 @@ func (q *Queries) GetRecipeList(ctx context.Context) ([]Recipe, error) {
 }
 
 const getUsersRecipes = `-- name: GetUsersRecipes :many
-SELECT id, title, created_at, updated_at, user_id, description, image_link FROM recipes
+SELECT id, title, created_at, updated_at, user_id, description, image_key FROM recipes
 WHERE user_id = $1
 ORDER BY created_at DESC
 `
@@ -131,7 +131,7 @@ func (q *Queries) GetUsersRecipes(ctx context.Context, userID uuid.UUID) ([]Reci
 			&i.UpdatedAt,
 			&i.UserID,
 			&i.Description,
-			&i.ImageLink,
+			&i.ImageKey,
 		); err != nil {
 			return nil, err
 		}

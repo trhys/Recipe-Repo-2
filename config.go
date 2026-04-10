@@ -15,4 +15,5 @@ type apiConfig struct {
 	s3client	*s3.Client
 	s3bucket	string
 	s3region	string
+	s3cdn		string
 }

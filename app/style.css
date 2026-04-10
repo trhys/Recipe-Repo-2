@@ -21,3 +21,20 @@ html {
   background: linear-gradient(to bottom, #5298FF 0%, #15537D 100%, #5298FF 100%);
   background-attachment: fixed;
 }
+
+.content-card {
+	width: 100%;
+	max-width: 450px;
+	aspect-ratio: 16/9;
+
+	border-radius: 12px;
+	overflow: hidden;
+
+}
+
+.card-image {
+	object-fit: cover;
+	width: 100%;
+	height: auto;
+	object-position: center;
+}

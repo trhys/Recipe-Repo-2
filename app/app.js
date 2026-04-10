@@ -152,6 +152,9 @@ async function getRecipes() {
 	<p>Created: ${displayDate}</p>
 	<a href="/app/recipes/by_user/${recipe.user_id}">
 	<h5>Author: ${recipe.author}</h5></a>
+	<br /><div class="content-card">
+		<img src=${recipe.image_url} class="card-image">
+	</div>
       </div>`;
       recipeList.appendChild(listItem);
     }
@@ -202,8 +205,7 @@ if (recipeCreator) {
 				title: document.getElementById('recipe-title').value,
 				user_id: localStorage.getItem('user_id'),
 				ingredients: [],
-				description: document.getElementById('author-description').value,
-				image:
+				description: document.getElementById('author-description').value
 			};
 
 			const rows = document.querySelectorAll('.ingredient-row')
@@ -217,15 +219,17 @@ if (recipeCreator) {
 				recipeData.ingredients.push(ingredient);
 			});
 
+			const formData = new FormData();
+			formData.append("payload", JSON.stringify(recipeData))
+			formData.append("image", recipeCreator.recipe_pic.files[0])
+
 			const res = await fetch('/api/new_recipe', {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json',
 					Authorization: `Bearer ${localStorage.getItem('token')}`,
 				},
-				body: JSON.stringify(recipeData),
+				body: formData,
 			});
-			console.log("Sending request:", JSON.stringify(recipeData, null, 2));
 			if (!res.ok) {
 				const data = await res.json();
 				throw new Error(`Failed to create recipe: ${data.error}`);

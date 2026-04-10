@@ -21,13 +21,17 @@
   <div id="recipe-viewer">    
     <h2>
       {{ .Title }}
-      <hr>
+      <hr></h2>
       <h4>
         By: {{ .Author }}
         <br /> Created: {{ .CreatedAt.Format "Jan 02, 2006" }}
         <br /> Updated: {{ .UpdatedAt.Format "Jan 02, 2006" }}
       </h4>
-    </h2>
+    
+
+    <div class="content-card">
+    	<img src={{ .ImageURL }} class="card-image">
+    </div>
     
     <h5>
       Ingredients

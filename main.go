@@ -62,6 +62,11 @@ func main() {
 		log.Fatal("Failed to load s3 region")
 	}
 
+	s3cdn := os.Getenv("S3_CDN")
+	if s3cdn == "" {
+		log.Fatal("Failed to load s3 CDN")
+	}
+
 	// Connect to database
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
@@ -88,8 +93,8 @@ func main() {
 		s3client: s3.NewFromConfig(s3cfg) ,
 		s3bucket: s3bucket,
 		s3region: s3region,
+		s3cdn: s3cdn,
 	}
-
 	
 	// Load server
 
