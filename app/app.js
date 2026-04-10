@@ -202,7 +202,8 @@ if (recipeCreator) {
 				title: document.getElementById('recipe-title').value,
 				user_id: localStorage.getItem('user_id'),
 				ingredients: [],
-				description: document.getElementById('author-description').value
+				description: document.getElementById('author-description').value,
+				image:
 			};
 
 			const rows = document.querySelectorAll('.ingredient-row')

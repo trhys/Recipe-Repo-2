@@ -1,0 +1,7 @@
+-- +goose Up
+ALTER TABLE recipes
+ADD COLUMN image_link TEXT NOT NULL DEFAULT '';
+
+-- +goose Down
+ALTER TABLE recipes
+DROP COLUMN image_link;

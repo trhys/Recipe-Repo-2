@@ -27,7 +27,12 @@
           placeholder="Title"
           required
         /><br />
-      <div id="ingredients-wrapper">
+	<form id="recipe-image-upload" action="/upload-endpoint" method="post" enctype="multipart/form-data" accept=".jpg, .jpeg, .png">
+		<label for="recipe-image">Select a file:</label>
+  		<input type="file" id="recipe-image" name="filename">
+  		<input type="submit" value="Upload">
+	</form>
+	<div id="ingredients-wrapper">
         <div class="ingredient-row" style="margin-top: 10px;">
           <input class="input-area" type="text" name="name" placeholder="name (flour)" required />
           <input class="input-area" type="number" step="any" name="quantity" placeholder="qty (1)" required />

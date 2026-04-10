@@ -31,6 +31,7 @@ type recipeResponse struct {
 	Ingredients	[]ingredient `json:"ingredients"`
 	Author		string `json:"author"`
 	Description	string `json:"description"`
+	ImageLink	string `json:"image_link"`
 }
 
 func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +46,7 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 			Unit		string `json:"unit"`
 		} `json:"ingredients"`
 		Description string `json:"description"`
+		ImageLink string `json:"image_link"`
 	}
 	if err := decoder.Decode(&req); err != nil {
 		respondFail(w, 500, "Failed to decode request body", err)
@@ -81,6 +83,7 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 		Title: req.Title,
 		UserID: user.ID,
 		Description: req.Description,
+		ImageLink: req.ImageLink,
 	}
 
 	recipe, err := cfg.db.CreateRecipe(r.Context(), query)
@@ -125,6 +128,7 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 		Ingredients: ingredients,
 		Author: user.Name,
 		Description: recipe.Description,
+		ImageLink: recipe.ImageLink,
 	}
 
 	respondJSON(w, 201, res)
@@ -180,6 +184,7 @@ func (cfg *apiConfig) handlerGetRecipe(w http.ResponseWriter, r *http.Request) {
 		Ingredients: ingredients,
 		Author: author,
 		Description: recipe.Description,
+		ImageLink: recipe.ImageLink,
 	}
 
 	respondJSON(w, 200, res)
@@ -234,6 +239,7 @@ func (cfg *apiConfig) appGetRecipe(w http.ResponseWriter, r *http.Request) {
 		Ingredients: ingredients,
 		Author: author,
 		Description: recipe.Description,
+		ImageLink: recipe.ImageLink,
 	}
 	
 	tmpl, _ := template.ParseFiles(filepath.Join("app", "templates", "recipe-viewer.html"))
@@ -248,6 +254,7 @@ type recipe struct{
 	UpdatedAt	time.Time `json:"updated_at"`
 	UserID		uuid.UUID `json:"user_id"`
 	Author		string `json:"author"`
+	ImageLink	string `json:"image_link"`
 }
 
 type recipeList struct{
@@ -276,6 +283,7 @@ func (cfg *apiConfig) handlerGetRecipeList(w http.ResponseWriter, r *http.Reques
 			UpdatedAt: rec.UpdatedAt,
 			UserID: rec.UserID,
 			Author: author,
+			ImageLink: rec.ImageLink,
 		})
 	}
 
@@ -317,6 +325,7 @@ func (cfg *apiConfig) handlerGetUsersRecipes(w http.ResponseWriter, r *http.Requ
 			UpdatedAt: rec.UpdatedAt,
 			UserID: rec.UserID,
 			Author: user.Name,
+			ImageLink: rec.ImageLink,
 		})
 	}
 	list.Name = user.Name
@@ -352,6 +361,7 @@ func (cfg *apiConfig) appGetUsersRecipes(w http.ResponseWriter, r *http.Request)
 			CreatedAt: rec.CreatedAt,
 			UpdatedAt: rec.UpdatedAt,
 			Author: user.Name,
+			ImageLink: rec.ImageLink,
 		})
 	}
 	list.Name = user.Name

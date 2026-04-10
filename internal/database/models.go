@@ -27,6 +27,7 @@ type Recipe struct {
 	UpdatedAt   time.Time
 	UserID      uuid.UUID
 	Description string
+	ImageLink   string
 }
 
 type User struct {
