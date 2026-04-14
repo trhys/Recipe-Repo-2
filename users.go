@@ -78,6 +78,7 @@ type loginResponse struct {
 	Email		string `json:"email"`
 	Username	string `json:"username"`
 	JWT		string `json:"token"`
+	RT		string `json:"refresh_token"`
 }
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
@@ -107,11 +108,22 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 			respondFail(w, 500, "Failed to generate token", err)
 			return
 		}
+
+		refresh_token := auth.MakeRefreshToken()
+		if _, err := cfg.db.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
+			ID: refresh_token,
+			UserID: user.ID,
+		}); err != nil {
+			respondFail(w, 500, "Couldn't generate refresh token", err)
+			return
+		}
+
 		respondJSON(w, 201, loginResponse{
 			ID: user.ID,
 			Email: req.Email,
 			Username: user.Name,
 			JWT: token,
+			RT: refresh_token,
 		})
 		return
 	} else {

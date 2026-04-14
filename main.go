@@ -122,6 +122,9 @@ func main() {
 	mux.HandleFunc("GET /api/recipes", config.handlerGetRecipeList)
 	mux.HandleFunc("POST /api/new_recipe", config.handlerCreateRecipe)
 
+	mux.HandleFunc("POST /api/tokens/refresh", config.handlerRefreshToken)
+	mux.HandleFunc("POST /api/tokens/revoke", config.handlerRevokeToken)
+
 	log.Print("Successfully loaded server...")
 
 	if err := server.ListenAndServe(); err != nil {

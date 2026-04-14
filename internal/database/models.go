@@ -5,6 +5,7 @@
 package database
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,6 +29,14 @@ type Recipe struct {
 	UserID      uuid.UUID
 	Description string
 	ImageKey    string
+}
+
+type RefreshToken struct {
+	ID        string
+	CreatedAt time.Time
+	RevokedAt sql.NullTime
+	ExpiresAt time.Time
+	UserID    uuid.UUID
 }
 
 type User struct {
