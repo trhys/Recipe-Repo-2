@@ -10,7 +10,7 @@ VALUES (
 ) RETURNING id, created_at, email, name;
 
 -- name: GetUserHash :one
-SELECT id, hashed_pw FROM users
+SELECT id, name, hashed_pw FROM users
 WHERE email = $1;
 
 -- name: ResetUsers :exec

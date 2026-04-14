@@ -76,6 +76,7 @@ type loginRequest struct {
 type loginResponse struct {
 	ID		uuid.UUID `json:"id"`
 	Email		string `json:"email"`
+	Username	string `json:"username"`
 	JWT		string `json:"token"`
 }
 
@@ -109,6 +110,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		respondJSON(w, 201, loginResponse{
 			ID: user.ID,
 			Email: req.Email,
+			Username: user.Name,
 			JWT: token,
 		})
 		return

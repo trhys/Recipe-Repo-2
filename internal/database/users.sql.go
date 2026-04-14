@@ -88,19 +88,20 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (GetUserRow, error)
 }
 
 const getUserHash = `-- name: GetUserHash :one
-SELECT id, hashed_pw FROM users
+SELECT id, name, hashed_pw FROM users
 WHERE email = $1
 `
 
 type GetUserHashRow struct {
 	ID       uuid.UUID
+	Name     string
 	HashedPw string
 }
 
 func (q *Queries) GetUserHash(ctx context.Context, email string) (GetUserHashRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserHash, email)
 	var i GetUserHashRow
-	err := row.Scan(&i.ID, &i.HashedPw)
+	err := row.Scan(&i.ID, &i.Name, &i.HashedPw)
 	return i, err
 }
 
