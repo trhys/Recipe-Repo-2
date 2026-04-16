@@ -216,12 +216,14 @@ if (recipeCreator) {
 
 			rows.forEach(row => {
 				const ingredient = {
-					name: row.querySelector('input[name="ingredient_id"]').value,
+					id: row.querySelector('input[name="ingredient_id"]').value,
 					quantity: parseFloat(row.querySelector('input[name="quantity"]').value),
 					unit: row.querySelector('select[name="unit"]').value
 				};
 				recipeData.ingredients.push(ingredient);
 			});
+
+			//alert(`Sending: ${JSON.stringify(recipeData)}`);
 
 			const formData = new FormData();
 			formData.append("payload", JSON.stringify(recipeData))
