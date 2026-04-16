@@ -106,7 +106,7 @@ func main() {
 
 	// JS Fileserver handler
 	appHandler := http.StripPrefix("/app", http.FileServer(http.Dir(appDirectory)))
-	mux.Handle("/app/", appHandler)
+	mux.Handle("/", appHandler)
 
 	// Handlers
 	mux.HandleFunc("GET /app/recipes/{recipe_id}", config.appGetRecipe)

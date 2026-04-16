@@ -2,6 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', async () => {
   const token = localStorage.getItem('token');
+  const refresher = localStorage.getItem('refresh_token');
 
   loginBtn = document.getElementById('login-btn')
   signupBtn = document.getElementById('signup-btn')
@@ -87,6 +88,7 @@ async function login() {
 
     if (data.token) {
       localStorage.setItem('token', data.token);
+      localStorage.setItem('refresh_token', data.refresh_token);
       localStorage.setItem('user_id', data.id);
       window.location.href='/app';
     } else {
@@ -122,6 +124,7 @@ async function signup() {
 
 function logout() {
   localStorage.removeItem('token');
+  localStorage.removeItem('refresh_token');
   localStorage.removeItem('user_id');
   window.location.href='/app';
 }
@@ -135,7 +138,7 @@ async function getRecipes() {
     });
     if (!res.ok) {
       const data = await res.json();
-      throw new Error(`Failed to get videos. Error: ${data.error}`);
+      throw new Error(`Failed to get recipe list. Error: ${data.error}`);
     }
 
     const data = await res.json();
@@ -223,13 +226,30 @@ if (recipeCreator) {
 			formData.append("payload", JSON.stringify(recipeData))
 			formData.append("image", recipeCreator.recipe_pic.files[0])
 
-			const res = await fetch('/api/new_recipe', {
+			const url = '/api/new_recipe'
+			const reqBody = {
 				method: 'POST',
 				headers: {
 					Authorization: `Bearer ${localStorage.getItem('token')}`,
 				},
 				body: formData,
+			}
+
+			let res = await fetch(url, reqBody);
+			if (res.status !== 401) {
+				window.location.href = '/app';
+				return res;
+			}
+
+			const refreshRes = await fetch('/api/refresh', {
+				method: "POST',
+				headers: {
+					Authorization: `Bearer ${localStorage.getItem('refresh_token')}`,
+				},
 			});
+
+			if (!refreshRes.ok) throw new Error("Session expired");
+
 			if (!res.ok) {
 				const data = await res.json();
 				throw new Error(`Failed to create recipe: ${data.error}`);
