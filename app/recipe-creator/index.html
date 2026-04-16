@@ -31,7 +31,13 @@
 	<input type="file" id="recipe-image" name="recipe_pic" accept=".jpg, .jpeg, .png"><br />
 	<div id="ingredients-wrapper">
         <div class="ingredient-row" style="margin-top: 10px;">
-          <input class="input-area" type="text" name="name" placeholder="name (flour)" required />
+          <div class="searchable-dropdown">
+		  <input type="text" id="dbSearch" placeholder="Search from database..." onkeyup="filterOptions()">
+		  <input type="hidden" id="ingredient_uuid" name="ingredient_id">
+		  <ul id="optionsList" class="dropdown-content">
+		    <!-- Database items will appear here -->
+		  </ul>
+		</div>
           <input class="input-area" type="number" step="any" name="quantity" placeholder="qty (1)" required />
           <label for="unit">Unit:</label>
                 <select name="unit" id="cars">
@@ -51,3 +57,39 @@
 	</div>
 <button type="submit">Submit</button>
     </form>
+
+    <script>
+async function fetchDbOptions() {
+  try {
+    const response = await fetch('/api/get_ingredients');
+    const items = await response.json();
+    populateList(items.ingredients);
+  } catch (err) {
+    console.error("Failed to load database options:", err);
+  }
+}
+
+function populateList(items) {
+  const list = document.getElementById('optionsList');
+  list.innerHTML = items.map(item => `
+	  <li onclick="selectItem('${item.name}', '${item.id}')">${item.name}</li>
+  `).join('');
+}
+
+function filterOptions() {
+  const input = document.getElementById('dbSearch').value.toLowerCase();
+  const listItems = document.querySelectorAll('#optionsList li');
+
+  listItems.forEach(li => {
+    const text = li.textContent.toLowerCase();
+    li.style.display = text.includes(input) ? "block" : "none";
+  });
+}
+
+function selectItem(name, id) {
+  document.getElementById('dbSearch').value = name;
+  document.getElementById('ingredient_uuid').value = id;
+}
+fetchDbOptions();
+    </script>
+</body>

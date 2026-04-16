@@ -132,3 +132,25 @@ func (cfg *apiConfig) handlerCreateIngredient(w http.ResponseWriter, r *http.Req
 
 	respondJSON(w, 200, res)
 }
+
+func (cfg *apiConfig) handlerGetIngredientBase(w http.ResponseWriter, r *http.Request) {
+	ingredients, err := cfg.db.GetIngredients(r.Context())
+	if err != nil {
+		respondFail(w, 404, "Failed to retrieve ingredients from database", err)
+		return
+	}
+
+	type resp struct{
+		Ingredients []ingredient `json:"ingredients"`
+	}
+
+	res := resp{}
+	for _, i := range ingredients {
+		res.Ingredients = append(res.Ingredients, ingredient{
+			ID: i.ID,
+			Name: i.Name,
+		})
+	}
+
+	respondJSON(w, 200, res)
+}

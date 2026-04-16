@@ -7,6 +7,8 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createIngredient = `-- name: CreateIngredient :one
@@ -36,4 +38,36 @@ func (q *Queries) CreateIngredient(ctx context.Context, arg CreateIngredientPara
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getIngredients = `-- name: GetIngredients :many
+SELECT id, name FROM ingredients
+`
+
+type GetIngredientsRow struct {
+	ID   uuid.UUID
+	Name string
+}
+
+func (q *Queries) GetIngredients(ctx context.Context) ([]GetIngredientsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getIngredients)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetIngredientsRow
+	for rows.Next() {
+		var i GetIngredientsRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

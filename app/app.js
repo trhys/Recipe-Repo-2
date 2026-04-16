@@ -216,7 +216,7 @@ if (recipeCreator) {
 
 			rows.forEach(row => {
 				const ingredient = {
-					name: row.querySelector('input[name="name"]').value,
+					name: row.querySelector('input[name="ingredient_id"]').value,
 					quantity: parseFloat(row.querySelector('input[name="quantity"]').value),
 					unit: row.querySelector('select[name="unit"]').value
 				};
@@ -254,6 +254,54 @@ if (recipeCreator) {
 			if (!res.ok) {
 				const data = await res.json();
 				throw new Error(`Failed to create recipe: ${data.error}`);
+			}
+			window.location.href='/app';
+		} catch (error) {
+			alert(`Error: ${error.message}`);
+		}
+	});
+}
+
+addIngredient = document.getElementById('add-ingredient-panel');
+if (addIngredient) {
+	addIngredient.addEventListener('submit', async (event) => {
+		event.preventDefault();
+		try {
+			const ingredientData = {
+				name: document.getElementById('ingredient-name').value,
+			}
+
+			const formData = new FormData();
+			formData.append("payload", JSON.stringify(ingredientData));
+
+			const url = '/api/admin/new_ingredient'
+			const reqBody = {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${localStorage.getItem('token')}`,
+				},
+				body: formData,
+			}
+
+			let res = await fetch(url, reqBody);
+			if (res.status !== 401) {
+				alert('Success')
+				window.location.href = '/app';
+				return res;
+			}
+
+			const refreshRes = await fetch('/api/refresh', {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${localStorage.getItem('refresh_token')}`,
+				},
+			});
+
+			if (!refreshRes.ok) throw new Error("Session expired");
+
+			if (!res.ok) {
+				const data = await res.json();
+				throw new Error(`Failed to create ingredient: ${data.error}`);
 			}
 			window.location.href='/app';
 		} catch (error) {

@@ -123,6 +123,7 @@ func main() {
 	mux.HandleFunc("POST /api/new_recipe", config.handlerCreateRecipe)
 
 	mux.HandleFunc("POST /api/admin/new_ingredient", config.handlerCreateIngredient)
+	mux.HandleFunc("GET /api/get_ingredients", config.handlerGetIngredientBase)
 
 	mux.HandleFunc("POST /api/tokens/refresh", config.handlerRefreshToken)
 	mux.HandleFunc("POST /api/tokens/revoke", config.handlerRevokeToken)

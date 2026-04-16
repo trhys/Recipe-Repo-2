@@ -7,3 +7,6 @@ VALUES (
 	NOW(),
 	NOW()
 ) RETURNING *;
+
+-- name: GetIngredients :many
+SELECT id, name FROM ingredients;
