@@ -17,14 +17,11 @@ import (
 	"github.com/trhys/Recipe-Repo-2/internal/auth"
 )
 
-type ingredient struct {
+type ingredientResponse struct {
 	ID		uuid.UUID `json:"id"`
 	Name		string `json:"name"`
-	Quantity	float32 `json:"quantity"`
+	Quantity 	float32 `json:"quantity"`
 	Unit		string `json:"unit"`
-	CreatedAt	time.Time `json:"created_at"`
-	UpdatedAt	time.Time `json:"updated_at"`
-	RecipeID	uuid.UUID `json:"recipe_id"`
 }
 
 type recipeResponse struct {
@@ -33,10 +30,10 @@ type recipeResponse struct {
 	CreatedAt	time.Time `json:"created_at"`
 	UpdatedAt	time.Time `json:"updated_at"`
 	UserID		uuid.UUID `json:"user_id"`
-	Ingredients	[]ingredient `json:"ingredients"`
 	Author		string `json:"author"`
 	Description	string `json:"description"`
 	ImageKey	string `json:"image_key"`
+	Ingredients 	[]ingredientResponse `json:"ingredients"`
 }
 
 type appResponse struct {
@@ -50,12 +47,13 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 	var req struct{
 		Title string `json:"title"`
 		UserID uuid.UUID `json:"user_id"`
+		Description string `json:"description"`
 		Ingredients []struct{
-			Name		string `json:"name"`
-			Quantity	float32 `json:"quantity"`
+			ID		uuid.UUID `json:"id"`
+			Quantity 	float32 `json:"quantity"`
 			Unit		string `json:"unit"`
 		} `json:"ingredients"`
-		Description string `json:"description"`
+
 	}
 
 	// Get request payload 
@@ -67,8 +65,8 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Make sure user exists
-	user, err := cfg.db.GetUser(r.Context(), req.UserID)
+	// Get username
+	username, err := cfg.db.GetName(r.Context(), req.UserID)
 	if err != nil {
 		respondFail(w, 404, "Invalid user id", err)
 		return
@@ -87,7 +85,7 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if subject != user.ID {
+	if subject != req.UserID {
 		respondFail(w, 401, "Unauthorized access", nil)
 		return
 	}
@@ -146,7 +144,8 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 	// Query database
 	query := database.CreateRecipeParams{
 		Title: req.Title,
-		UserID: user.ID,
+		Author: username,
+		UserID: req.UserID,
 		Description: req.Description,
 		ImageKey: key,
 	}
@@ -157,30 +156,20 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	ingredients := []ingredient{}
+	// Connect all ingredients
 	for _, ing := range req.Ingredients {
-		query := database.CreateIngredientParams{
-			Name: ing.Name,
+		query := database.AddToRecipeParams{
+			RecipeID: recipe.ID,
+			IngredientID: ing.ID,
 			Quantity: ing.Quantity,
 			Unit: ing.Unit,
-			RecipeID: recipe.ID,
 		}
 
-		i, err := cfg.db.CreateIngredient(r.Context(), query)
+		_, err := cfg.db.AddToRecipe(r.Context(), query)
 		if err != nil {
-			respondFail(w, 500, "Failed to create ingredient", err)
+			respondFail(w, 500, "Failed to add ingredient", err)
 			return
-		}
-
-		ingredients = append(ingredients, ingredient{
-			ID: i.ID,
-			Name: i.Name,
-			Quantity: i.Quantity,
-			Unit: i.Unit,
-			CreatedAt: i.CreatedAt,
-			UpdatedAt: i.UpdatedAt,
-			RecipeID: i.RecipeID,
-		})
+		}	
 	}
 	
 	// Response
@@ -190,8 +179,7 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 		CreatedAt: recipe.CreatedAt,
 		UpdatedAt: recipe.UpdatedAt,
 		UserID: recipe.UserID,
-		Ingredients: ingredients,
-		Author: user.Name,
+		Author: username,
 		Description: recipe.Description,
 		ImageKey: recipe.ImageKey,
 	}
@@ -227,16 +215,13 @@ func (cfg *apiConfig) handlerGetRecipe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ingredients := []ingredient{}
+	ingredients := []ingredientResponse{}
 	for _, ing := range i {
-		ingredients = append(ingredients, ingredient{
+		ingredients = append(ingredients, ingredientResponse{
 			ID: ing.ID,
 			Name: ing.Name,
 			Quantity: ing.Quantity,
 			Unit: ing.Unit,
-			CreatedAt: ing.CreatedAt,
-			UpdatedAt: ing.UpdatedAt,
-			RecipeID: ing.RecipeID,
 		})
 	}
 
@@ -282,16 +267,13 @@ func (cfg *apiConfig) appGetRecipe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ingredients := []ingredient{}
+	ingredients := []ingredientResponse{}
 	for _, ing := range i {
-		ingredients = append(ingredients, ingredient{
+		ingredients = append(ingredients, ingredientResponse{
 			ID: ing.ID,
 			Name: ing.Name,
 			Quantity: ing.Quantity,
 			Unit: ing.Unit,
-			CreatedAt: ing.CreatedAt,
-			UpdatedAt: ing.UpdatedAt,
-			RecipeID: ing.RecipeID,
 		})
 	}
 

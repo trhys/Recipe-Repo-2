@@ -12,6 +12,18 @@ import (
 	"github.com/google/uuid"
 )
 
+const checkAdmin = `-- name: CheckAdmin :one
+SELECT admin FROM users
+WHERE id = $1
+`
+
+func (q *Queries) CheckAdmin(ctx context.Context, id uuid.UUID) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkAdmin, id)
+	var admin bool
+	err := row.Scan(&admin)
+	return admin, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (id, created_at, updated_at, email, hashed_pw, name)
 VALUES (

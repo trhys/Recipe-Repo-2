@@ -145,6 +145,7 @@ async function getRecipes() {
     const recipes = data.recipes;
     const recipeList = document.getElementById('recipes');
     recipeList.innerHTML = '';
+    if (recipes == null) return;
     for (const recipe of recipes) {
       const listItem = document.createElement('li');
       const displayDate = new Date(recipe.created_at).toLocaleDateString();
@@ -242,7 +243,7 @@ if (recipeCreator) {
 			}
 
 			const refreshRes = await fetch('/api/refresh', {
-				method: "POST',
+				method: 'POST',
 				headers: {
 					Authorization: `Bearer ${localStorage.getItem('refresh_token')}`,
 				},

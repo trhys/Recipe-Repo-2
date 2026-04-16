@@ -7,83 +7,33 @@ package database
 
 import (
 	"context"
-
-	"github.com/google/uuid"
 )
 
 const createIngredient = `-- name: CreateIngredient :one
-INSERT INTO ingredients (id, name, quantity, unit, created_at, updated_at, recipe_id)
+INSERT INTO ingredients (id, name, image_key, created_at, updated_at)
 VALUES (
 	gen_random_uuid(),
 	$1,
 	$2,
-	$3,
 	NOW(),
-	NOW(),
-	$4
-) RETURNING id, name, quantity, unit, created_at, updated_at, recipe_id
+	NOW()
+) RETURNING id, name, image_key, created_at, updated_at
 `
 
 type CreateIngredientParams struct {
 	Name     string
-	Quantity float32
-	Unit     string
-	RecipeID uuid.UUID
+	ImageKey string
 }
 
 func (q *Queries) CreateIngredient(ctx context.Context, arg CreateIngredientParams) (Ingredient, error) {
-	row := q.db.QueryRowContext(ctx, createIngredient,
-		arg.Name,
-		arg.Quantity,
-		arg.Unit,
-		arg.RecipeID,
-	)
+	row := q.db.QueryRowContext(ctx, createIngredient, arg.Name, arg.ImageKey)
 	var i Ingredient
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.Quantity,
-		&i.Unit,
+		&i.ImageKey,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.RecipeID,
 	)
 	return i, err
-}
-
-const getIngredientList = `-- name: GetIngredientList :many
-SELECT id, name, quantity, unit, created_at, updated_at, recipe_id FROM ingredients
-WHERE recipe_id = $1
-ORDER BY created_at
-`
-
-func (q *Queries) GetIngredientList(ctx context.Context, recipeID uuid.UUID) ([]Ingredient, error) {
-	rows, err := q.db.QueryContext(ctx, getIngredientList, recipeID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Ingredient
-	for rows.Next() {
-		var i Ingredient
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Quantity,
-			&i.Unit,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.RecipeID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }

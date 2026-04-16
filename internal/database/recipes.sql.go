@@ -12,21 +12,23 @@ import (
 )
 
 const createRecipe = `-- name: CreateRecipe :one
-INSERT INTO recipes (id, title, created_at, updated_at, user_id, description, image_key)
+INSERT INTO recipes (id, title, author, created_at, updated_at, user_id, description, image_key)
 VALUES(
 	gen_random_uuid(),
 	$1,
-	NOW(),
-	NOW(),
 	$2,
+	NOW(),
+	NOW(),
 	$3,
-	$4
+	$4,
+	$5
 )
-RETURNING id, title, created_at, updated_at, user_id, description, image_key
+RETURNING id, title, author, description, image_key, created_at, updated_at, user_id
 `
 
 type CreateRecipeParams struct {
 	Title       string
+	Author      string
 	UserID      uuid.UUID
 	Description string
 	ImageKey    string
@@ -35,6 +37,7 @@ type CreateRecipeParams struct {
 func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Recipe, error) {
 	row := q.db.QueryRowContext(ctx, createRecipe,
 		arg.Title,
+		arg.Author,
 		arg.UserID,
 		arg.Description,
 		arg.ImageKey,
@@ -43,17 +46,18 @@ func (q *Queries) CreateRecipe(ctx context.Context, arg CreateRecipeParams) (Rec
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
+		&i.Author,
+		&i.Description,
+		&i.ImageKey,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.UserID,
-		&i.Description,
-		&i.ImageKey,
 	)
 	return i, err
 }
 
 const getRecipe = `-- name: GetRecipe :one
-SELECT id, title, created_at, updated_at, user_id, description, image_key FROM recipes
+SELECT id, title, author, description, image_key, created_at, updated_at, user_id FROM recipes
 WHERE id = $1
 `
 
@@ -63,17 +67,18 @@ func (q *Queries) GetRecipe(ctx context.Context, id uuid.UUID) (Recipe, error) {
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
+		&i.Author,
+		&i.Description,
+		&i.ImageKey,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.UserID,
-		&i.Description,
-		&i.ImageKey,
 	)
 	return i, err
 }
 
 const getRecipeList = `-- name: GetRecipeList :many
-SELECT id, title, created_at, updated_at, user_id, description, image_key FROM recipes
+SELECT id, title, author, description, image_key, created_at, updated_at, user_id FROM recipes
 ORDER BY created_at DESC
 LIMIT 10
 `
@@ -90,11 +95,12 @@ func (q *Queries) GetRecipeList(ctx context.Context) ([]Recipe, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Title,
+			&i.Author,
+			&i.Description,
+			&i.ImageKey,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.UserID,
-			&i.Description,
-			&i.ImageKey,
 		); err != nil {
 			return nil, err
 		}
@@ -110,7 +116,7 @@ func (q *Queries) GetRecipeList(ctx context.Context) ([]Recipe, error) {
 }
 
 const getUsersRecipes = `-- name: GetUsersRecipes :many
-SELECT id, title, created_at, updated_at, user_id, description, image_key FROM recipes
+SELECT id, title, author, description, image_key, created_at, updated_at, user_id FROM recipes
 WHERE user_id = $1
 ORDER BY created_at DESC
 `
@@ -127,11 +133,12 @@ func (q *Queries) GetUsersRecipes(ctx context.Context, userID uuid.UUID) ([]Reci
 		if err := rows.Scan(
 			&i.ID,
 			&i.Title,
+			&i.Author,
+			&i.Description,
+			&i.ImageKey,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.UserID,
-			&i.Description,
-			&i.ImageKey,
 		); err != nil {
 			return nil, err
 		}

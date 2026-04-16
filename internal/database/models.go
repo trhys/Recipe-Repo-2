@@ -14,21 +14,27 @@ import (
 type Ingredient struct {
 	ID        uuid.UUID
 	Name      string
-	Quantity  float32
-	Unit      string
+	ImageKey  string
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	RecipeID  uuid.UUID
 }
 
 type Recipe struct {
 	ID          uuid.UUID
 	Title       string
+	Author      string
+	Description string
+	ImageKey    string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	UserID      uuid.UUID
-	Description string
-	ImageKey    string
+}
+
+type RecipeIngredient struct {
+	RecipeID     uuid.UUID
+	IngredientID uuid.UUID
+	Quantity     float32
+	Unit         string
 }
 
 type RefreshToken struct {
@@ -39,11 +45,26 @@ type RefreshToken struct {
 	UserID    uuid.UUID
 }
 
+type ShoppingList struct {
+	ID        uuid.UUID
+	Name      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	UserID    uuid.UUID
+}
+
+type ShoppingListIngredient struct {
+	ShoppingListID uuid.UUID
+	IngredientID   uuid.UUID
+	Quantity       float32
+}
+
 type User struct {
 	ID        uuid.UUID
+	Name      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Email     string
 	HashedPw  string
-	Name      string
+	Admin     bool
 }

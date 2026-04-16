@@ -23,3 +23,7 @@ WHERE id = $1;
 -- name: GetName :one
 SELECT name FROM users
 WHERE id = $1;
+
+-- name: CheckAdmin :one
+SELECT admin FROM users
+WHERE id = $1;

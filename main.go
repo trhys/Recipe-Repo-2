@@ -106,7 +106,7 @@ func main() {
 
 	// JS Fileserver handler
 	appHandler := http.StripPrefix("/app", http.FileServer(http.Dir(appDirectory)))
-	mux.Handle("/", appHandler)
+	mux.Handle("/app/", appHandler)
 
 	// Handlers
 	mux.HandleFunc("GET /app/recipes/{recipe_id}", config.appGetRecipe)
@@ -115,12 +115,14 @@ func main() {
 	mux.HandleFunc("GET /api/users/{user_id}", config.handlerGetUser)
 	mux.HandleFunc("POST /api/new_user", config.handlerCreateUser)
 	mux.HandleFunc("POST /api/login", config.handlerLogin)
-	mux.HandleFunc("POST /api/reset", config.handlerReset)
+	mux.HandleFunc("POST /api/admin/reset", config.handlerReset)
 
 	mux.HandleFunc("GET /api/recipes/by_user/{user_id}", config.handlerGetUsersRecipes)
 	mux.HandleFunc("GET /api/recipes/{recipe_id}", config.handlerGetRecipe)
 	mux.HandleFunc("GET /api/recipes", config.handlerGetRecipeList)
 	mux.HandleFunc("POST /api/new_recipe", config.handlerCreateRecipe)
+
+	mux.HandleFunc("POST /api/admin/new_ingredient", config.handlerCreateIngredient)
 
 	mux.HandleFunc("POST /api/tokens/refresh", config.handlerRefreshToken)
 	mux.HandleFunc("POST /api/tokens/revoke", config.handlerRevokeToken)
