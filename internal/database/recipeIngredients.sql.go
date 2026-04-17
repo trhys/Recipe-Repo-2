@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -47,17 +46,13 @@ func (q *Queries) AddToRecipe(ctx context.Context, arg AddToRecipeParams) (Recip
 }
 
 const getIngredientList = `-- name: GetIngredientList :many
-SELECT id, name, image_key, created_at, updated_at, recipe_id, ingredient_id, quantity, unit FROM ingredients
+SELECT ingredients.name, recipe_ingredients.recipe_id, recipe_ingredients.ingredient_id, recipe_ingredients.quantity, recipe_ingredients.unit FROM ingredients
 INNER JOIN recipe_ingredients ON ingredients.id = recipe_ingredients.ingredient_id
 WHERE recipe_ingredients.recipe_id = $1
 `
 
 type GetIngredientListRow struct {
-	ID           uuid.UUID
 	Name         string
-	ImageKey     string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
 	RecipeID     uuid.UUID
 	IngredientID uuid.UUID
 	Quantity     float32
@@ -74,11 +69,7 @@ func (q *Queries) GetIngredientList(ctx context.Context, recipeID uuid.UUID) ([]
 	for rows.Next() {
 		var i GetIngredientListRow
 		if err := rows.Scan(
-			&i.ID,
 			&i.Name,
-			&i.ImageKey,
-			&i.CreatedAt,
-			&i.UpdatedAt,
 			&i.RecipeID,
 			&i.IngredientID,
 			&i.Quantity,
@@ -87,34 +78,6 @@ func (q *Queries) GetIngredientList(ctx context.Context, recipeID uuid.UUID) ([]
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getRecipesIngredients = `-- name: GetRecipesIngredients :many
-SELECT ingredient_id FROM recipe_ingredients
-WHERE recipe_id = $1
-`
-
-func (q *Queries) GetRecipesIngredients(ctx context.Context, recipeID uuid.UUID) ([]uuid.UUID, error) {
-	rows, err := q.db.QueryContext(ctx, getRecipesIngredients, recipeID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []uuid.UUID
-	for rows.Next() {
-		var ingredient_id uuid.UUID
-		if err := rows.Scan(&ingredient_id); err != nil {
-			return nil, err
-		}
-		items = append(items, ingredient_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

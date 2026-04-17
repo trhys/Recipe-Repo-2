@@ -8,10 +8,6 @@ VALUES (
 ) RETURNING *;
 
 -- name: GetIngredientList :many
-SELECT * FROM ingredients
+SELECT ingredients.name, recipe_ingredients.* FROM ingredients
 INNER JOIN recipe_ingredients ON ingredients.id = recipe_ingredients.ingredient_id
 WHERE recipe_ingredients.recipe_id = $1;
-
--- name: GetRecipesIngredients :many
-SELECT ingredient_id FROM recipe_ingredients
-WHERE recipe_id = $1;

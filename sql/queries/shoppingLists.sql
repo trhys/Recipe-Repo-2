@@ -7,3 +7,11 @@ VALUES (
 	NOW(),
 	$2
 ) RETURNING *;
+
+-- name: GetShoppingList :one
+SELECT * FROM shopping_lists
+WHERE id = $1;
+
+-- name: GetUserLists :many
+SELECT * FROM shopping_lists
+WHERE user_id = $1;

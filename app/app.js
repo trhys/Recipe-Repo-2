@@ -200,6 +200,26 @@ if (removeIngBtn) {
 	});
 }
 
+inWrapper = document.getElementById('ingredients-wrapper')
+
+if (inWrapper) {
+	inWrapper.addEventListener('input', function(e) {
+	  if (e.target.classList.contains('db-search-input')) {
+	    const row = e.target.closest('.ingredient-row');
+	    const hiddenInput = row.querySelector('.ingredient_uuid');
+	    const datalist = document.getElementById('ingredient-list');
+	    
+	    const selectedOption = Array.from(datalist.options).find(opt => opt.value === e.target.value);
+
+	    if (selectedOption) {
+	      hiddenInput.value = selectedOption.getAttribute('data-id');
+	    } else {
+	      hiddenInput.value = ""; 
+	    }
+	  }
+	});
+}
+
 recipeCreator = document.getElementById('recipe-creator');
 if (recipeCreator) {
 	recipeCreator.addEventListener('submit', async (event) => {
@@ -223,7 +243,7 @@ if (recipeCreator) {
 				recipeData.ingredients.push(ingredient);
 			});
 
-			//alert(`Sending: ${JSON.stringify(recipeData)}`);
+			alert(`Sending: ${JSON.stringify(recipeData)}`);
 
 			const formData = new FormData();
 			formData.append("payload", JSON.stringify(recipeData))
@@ -244,7 +264,7 @@ if (recipeCreator) {
 				return res;
 			}
 
-			const refreshRes = await fetch('/api/refresh', {
+			const refreshRes = await fetch('/api/tokens/refresh', {
 				method: 'POST',
 				headers: {
 					Authorization: `Bearer ${localStorage.getItem('refresh_token')}`,
@@ -252,6 +272,12 @@ if (recipeCreator) {
 			});
 
 			if (!refreshRes.ok) throw new Error("Session expired");
+			const data = await refreshRes.json();
+			if (data.token) {
+				localStorage.setItem('token', data.token);
+			}
+
+			res = await fetch(url, reqBody);
 
 			if (!res.ok) {
 				const data = await res.json();
@@ -300,6 +326,12 @@ if (addIngredient) {
 			});
 
 			if (!refreshRes.ok) throw new Error("Session expired");
+			const data = await refreshRes.json();
+			if (data.token) {
+				localStorage.setItem('token', data.token);
+			}
+
+			res = await fetch(url, reqBody);
 
 			if (!res.ok) {
 				const data = await res.json();

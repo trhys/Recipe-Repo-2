@@ -39,3 +39,55 @@ func (q *Queries) CreateShoppingList(ctx context.Context, arg CreateShoppingList
 	)
 	return i, err
 }
+
+const getShoppingList = `-- name: GetShoppingList :one
+SELECT id, name, created_at, updated_at, user_id FROM shopping_lists
+WHERE id = $1
+`
+
+func (q *Queries) GetShoppingList(ctx context.Context, id uuid.UUID) (ShoppingList, error) {
+	row := q.db.QueryRowContext(ctx, getShoppingList, id)
+	var i ShoppingList
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UserID,
+	)
+	return i, err
+}
+
+const getUserLists = `-- name: GetUserLists :many
+SELECT id, name, created_at, updated_at, user_id FROM shopping_lists
+WHERE user_id = $1
+`
+
+func (q *Queries) GetUserLists(ctx context.Context, userID uuid.UUID) ([]ShoppingList, error) {
+	rows, err := q.db.QueryContext(ctx, getUserLists, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ShoppingList
+	for rows.Next() {
+		var i ShoppingList
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

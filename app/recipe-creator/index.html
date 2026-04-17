@@ -31,16 +31,12 @@
 	<input type="file" id="recipe-image" name="recipe_pic" accept=".jpg, .jpeg, .png"><br />
 	<div id="ingredients-wrapper">
         <div class="ingredient-row" style="margin-top: 10px;">
-          <div class="searchable-dropdown">
-		  <input type="text" id="dbSearch" placeholder="Search from database..." onkeyup="filterOptions()">
-		  <input type="hidden" id="ingredient_uuid" name="ingredient_id">
-		  <ul id="optionsList" class="dropdown-content">
-		    <!-- Database items will appear here -->
-		  </ul>
-		</div>
+		  <input list="ingredient-list" type="text" class="db-search-input" placeholder="Search from database...">
+		  <input type="hidden" class="ingredient_uuid" name="ingredient_id">
+		  
           <input class="input-area" type="number" step="any" name="quantity" placeholder="qty (1)" required />
           <label for="unit">Unit:</label>
-                <select name="unit" id="cars">
+                <select name="unit">
                   <option value="cup">Cups</option>
                   <option value="tablespoon">Tablespoons</option>
                   <option value="teaspoon">Teaspoons</option>
@@ -48,6 +44,7 @@
                 </select>
           <button type="button" class="remove-btn">×</button>
         </div>
+	<datalist id="ingredient-list"></datalist>
       </div>
         <div class="button-container" style="margin-top: 5px;margin-bottom: 5px;">
         <button type="button" id="add-ingredient">Add Ingredient</button>
@@ -70,26 +67,26 @@ async function fetchDbOptions() {
 }
 
 function populateList(items) {
-  const list = document.getElementById('optionsList');
+  const list = document.getElementById('ingredient-list');
   list.innerHTML = items.map(item => `
-	  <li onclick="selectItem('${item.name}', '${item.id}')">${item.name}</li>
+	  <option value="${item.name}" data-id="${item.id}"></option>
   `).join('');
 }
 
 function filterOptions() {
   const input = document.getElementById('dbSearch').value.toLowerCase();
-  const listItems = document.querySelectorAll('#optionsList li');
+  const listItems = document.querySelectorAll('#ingredient-list option');
 
-  listItems.forEach(li => {
-    const text = li.textContent.toLowerCase();
-    li.style.display = text.includes(input) ? "block" : "none";
+  listItems.forEach(option => {
+    const text = option.textContent.toLowerCase();
+    option.style.display = text.includes(input) ? "block" : "none";
   });
 }
 
 function selectItem(name, id) {
-  document.getElementById('dbSearch').value = name;
   document.getElementById('ingredient_uuid').value = id;
 }
 fetchDbOptions();
+
     </script>
 </body>

@@ -108,25 +108,36 @@ func main() {
 	appHandler := http.StripPrefix("/app", http.FileServer(http.Dir(appDirectory)))
 	mux.Handle("/app/", appHandler)
 
-	// Handlers
-	mux.HandleFunc("GET /app/recipes/{recipe_id}", config.appGetRecipe)
-	mux.HandleFunc("GET /app/recipes/by_user/{user_id}", config.appGetUsersRecipes)
+	// Handlers :
 
+	// Web app eps
+	mux.HandleFunc("GET /app/recipes/{recipe_id}", config.handlerGetRecipe)
+	mux.HandleFunc("GET /app/recipes/by_user/{user_id}", config.handlerGetUsersRecipes)
+
+	// User eps
 	mux.HandleFunc("GET /api/users/{user_id}", config.handlerGetUser)
 	mux.HandleFunc("POST /api/new_user", config.handlerCreateUser)
 	mux.HandleFunc("POST /api/login", config.handlerLogin)
 	mux.HandleFunc("POST /api/admin/reset", config.handlerReset)
 
+	// Recipe eps
 	mux.HandleFunc("GET /api/recipes/by_user/{user_id}", config.handlerGetUsersRecipes)
 	mux.HandleFunc("GET /api/recipes/{recipe_id}", config.handlerGetRecipe)
 	mux.HandleFunc("GET /api/recipes", config.handlerGetRecipeList)
 	mux.HandleFunc("POST /api/new_recipe", config.handlerCreateRecipe)
 
+	// Ingredient eps
 	mux.HandleFunc("POST /api/admin/new_ingredient", config.handlerCreateIngredient)
 	mux.HandleFunc("GET /api/get_ingredients", config.handlerGetIngredientBase)
 
+	// Shopping list eps
+	mux.HandleFunc("POST /api/new_shopping_list", config.handlerCreateShoppingList)
+
+	// Token eps
 	mux.HandleFunc("POST /api/tokens/refresh", config.handlerRefreshToken)
 	mux.HandleFunc("POST /api/tokens/revoke", config.handlerRevokeToken)
+
+	// :
 
 	log.Print("Successfully loaded server...")
 

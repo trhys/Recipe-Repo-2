@@ -59,6 +59,12 @@ type ShoppingListIngredient struct {
 	Quantity       float32
 }
 
+type ShoppingListRecipe struct {
+	ShoppingListID uuid.UUID
+	RecipeID       uuid.UUID
+	Quantity       int32
+}
+
 type User struct {
 	ID        uuid.UUID
 	Name      string
