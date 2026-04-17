@@ -96,3 +96,31 @@ func (q *Queries) GetIngredientList(ctx context.Context, recipeID uuid.UUID) ([]
 	}
 	return items, nil
 }
+
+const getRecipesIngredients = `-- name: GetRecipesIngredients :many
+SELECT ingredient_id FROM recipe_ingredients
+WHERE recipe_id = $1
+`
+
+func (q *Queries) GetRecipesIngredients(ctx context.Context, recipeID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, getRecipesIngredients, recipeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var ingredient_id uuid.UUID
+		if err := rows.Scan(&ingredient_id); err != nil {
+			return nil, err
+		}
+		items = append(items, ingredient_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
