@@ -2,8 +2,8 @@
 <html>
 <head>
 <title>The Recipe Repository</title>
-<script src="../app.js" defer></script>
-<link rel="stylesheet" href="../style.css">
+<script src="/app.js" defer></script>
+<link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <div class="nav-bar">
@@ -12,8 +12,8 @@
       </h1>
           <button id="home" onclick="window.location.href='/app'">Home</button>
           <button id="logout-button" onclick="logout()">Logout</button>
-          <button id="login-btn" type="button" onclick="window.location.href='/app/login'">Login</button>
-          <button id="signup-btn" type="button" onclick="window.location.href='/app/signup'">Sign Up</button>
+          <button id="login-btn" type="button" onclick="window.location.href='/login'">Login</button>
+          <button id="signup-btn" type="button" onclick="window.location.href='/signup'">Sign Up</button>
     </div>
 <p>Welcome to The Recipe Repository!</p>
 <p>This will be a recipe sharing and shopping planner application.</p>
@@ -29,7 +29,7 @@
       <div class="recipes_in_list">
 	<ul id="recipes">
 		{{ range .Recipes }}
-		<li> <a href="../recipes/{{ .ID }}">{{ .Title }}</a> by <a href="../users/{{ .UserID }}">{{ .Author }}</a> + {{ .Quantity }}</li>
+		<li> <a href="/recipes/{{ .ID }}">{{ .Title }}</a> by <a href="/users/{{ .UserID }}">{{ .Author }}</a> + {{ .Quantity }}</li>
 		{{ else }}
 		<li>No recipes have been added...</li>
 		{{ end }}

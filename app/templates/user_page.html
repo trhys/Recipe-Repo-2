@@ -1,17 +1,17 @@
 <head>
 <title>The Recipe Repository</title>
-<script src="../../app.js" defer></script>
-<link rel="stylesheet" href="../../style.css">
+<script src="/app.js" defer></script>
+<link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <div class="nav-bar">
       <h1>
         The Recipe Repository
       </h1>
-          <button id="home" onclick="window.location.href='/app'">Home</button>
+          <button id="home" onclick="window.location.href='/'">Home</button>
           <button id="logout-button" onclick="logout()">Logout</button>
-          <button id="login-btn" type="button" onclick="window.location.href='/app/login'">Login</button>
-          <button id="signup-btn" type="button" onclick="window.location.href='/app/signup'">Sign Up</button>
+          <button id="login-btn" type="button" onclick="window.location.href='/login'">Login</button>
+          <button id="signup-btn" type="button" onclick="window.location.href='/signup'">Sign Up</button>
     </div>
 <p>Welcome to The Recipe Repository!</p>
 <p>This will be a recipe sharing and shopping planner application.</p>
@@ -20,7 +20,7 @@
 	<h2> {{ .Name }} </h2>
 	<hr>
 	<ul> {{ range .Recipes }}
-		<li> <a href="/app/recipes/{{ .ID }}">{{ .Title }}</a> <br /> Created: {{ .CreatedAt.Format "Jan 02, 2006" }}<hr>
+		<li> <a href="/recipes/{{ .ID }}">{{ .Title }}</a> <br /> Created: {{ .CreatedAt.Format "Jan 02, 2006" }}<hr>
 		<div class="content-card">
 			<img src={{ .ImageURL }} class="card-image">
 		</div>

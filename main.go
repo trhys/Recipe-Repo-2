@@ -105,14 +105,15 @@ func main() {
 	}
 
 	// JS Fileserver handler
-	appHandler := http.StripPrefix("/app", http.FileServer(http.Dir(appDirectory)))
-	mux.Handle("/app/", appHandler)
+	appHandler := http.FileServer(http.Dir(appDirectory))
+	mux.Handle("/", appHandler)
 
 	// Handlers :
 
 	// Web app eps
-	mux.HandleFunc("GET /app/recipes/{recipe_id}", config.handlerGetRecipe)
-	mux.HandleFunc("GET /app/recipes/by_user/{user_id}", config.handlerGetUsersRecipes)
+	mux.HandleFunc("GET /recipes/{recipe_id}", config.handlerGetRecipe)
+	mux.HandleFunc("GET /users/{user_id}", config.handlerGetUsersRecipes)
+	mux.HandleFunc("GET /shoppinglists/{shopping_list_id}", config.handlerGetShoppingList)
 
 	// User eps
 	mux.HandleFunc("GET /api/users/{user_id}", config.handlerGetUser)

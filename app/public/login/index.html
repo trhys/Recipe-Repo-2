@@ -1,41 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>The Recipe Repository - Signup</title>
+<title>The Recipe Repository - Login</title>
 <script src="../app.js" defer></script>
 <link rel="stylesheet" href="../style.css">
 </head>
 <body>
-  <div class="nav-bar">
+   <div class="nav-bar">
       <h1>
         The Recipe Repository
       </h1>
-          <button id="home" onclick="window.location.href='/app'">Home</button>
+          <button id="home" onclick="window.location.href='/'">Home</button>
     </div>
-
-     <form id="signup-form">
+  <div id="auth-section">
+      <h2>Login</h2>
+      <form id="login-form">
         <input
           class="input-area"
           type="email"
           id="email"
           placeholder="Email"
           required
-	  /><br />
+        />
         <input
           class="input-area"
           type="password"
           id="password"
           placeholder="Password"
           required
-	  /><br />
-	<input
-          class="input-area"
-          type="text"
-          id="username"
-          placeholder="Username"
-          required
-	  /><br />
+        />
         <div class="button-container">
-          <button id="signup-btn" type="submit" style="margin-top: 5px;">SignUp</button>
+          <button type="submit" style="margin-top: 5px;">Login</button>
         </div>
       </form>
+    </div>
+</body>
+</html>

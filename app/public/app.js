@@ -90,7 +90,7 @@ async function login() {
       localStorage.setItem('token', data.token);
       localStorage.setItem('refresh_token', data.refresh_token);
       localStorage.setItem('user_id', data.id);
-      window.location.href='/app';
+      window.location.href='/';
     } else {
       alert('Login failed. Please check your credentials.');
     }
@@ -116,7 +116,7 @@ async function signup() {
       const data = await res.json();
       throw new Error(`Failed to create user: ${data.error}`);
     }
-    window.location.href='/app/login';  
+    window.location.href='/login';  
   } catch (error) {
     alert(`Error: ${error.message}`);
   }
@@ -126,7 +126,7 @@ function logout() {
   localStorage.removeItem('token');
   localStorage.removeItem('refresh_token');
   localStorage.removeItem('user_id');
-  window.location.href='/app';
+  window.location.href='/';
 }
 
 // Recipe view
@@ -151,10 +151,10 @@ async function getRecipes() {
       const displayDate = new Date(recipe.created_at).toLocaleDateString();
       listItem.innerHTML = `
       <div class="card-content">
-	<a href="/app/recipes/${recipe.id}">
+	<a href="/recipes/${recipe.id}">
       	<h4>${recipe.title}</h4></a>
 	<p>Created: ${displayDate}</p>
-	<a href="/app/recipes/by_user/${recipe.user_id}">
+	<a href="/users/${recipe.user_id}">
 	<h5>Author: ${recipe.author}</h5></a>
 	<br /><div class="content-card">
 		<img src=${recipe.image_url} class="card-image">
@@ -260,7 +260,7 @@ if (recipeCreator) {
 
 			let res = await fetch(url, reqBody);
 			if (res.status !== 401) {
-				window.location.href = '/app';
+				window.location.href = '/';
 				return res;
 			}
 
@@ -283,7 +283,7 @@ if (recipeCreator) {
 				const data = await res.json();
 				throw new Error(`Failed to create recipe: ${data.error}`);
 			}
-			window.location.href='/app';
+			window.location.href='/';
 		} catch (error) {
 			alert(`Error: ${error.message}`);
 		}
@@ -314,7 +314,7 @@ if (addIngredient) {
 			let res = await fetch(url, reqBody);
 			if (res.status !== 401) {
 				alert('Success')
-				window.location.href = '/app';
+				window.location.href = '/';
 				return res;
 			}
 
@@ -337,7 +337,7 @@ if (addIngredient) {
 				const data = await res.json();
 				throw new Error(`Failed to create ingredient: ${data.error}`);
 			}
-			window.location.href='/app';
+			window.location.href='/';
 		} catch (error) {
 			alert(`Error: ${error.message}`);
 		}
