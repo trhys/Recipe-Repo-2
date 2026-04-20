@@ -93,7 +93,7 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 
 	// Request is valid - begin processing image file
 	file, fileHeader, err := r.FormFile("image")
-	key := uuid.New().String()
+	key := cfg.imagePlaceholder
 	if err == nil {
 		defer file.Close()
 	
@@ -125,6 +125,7 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 		tmp.Seek(0, io.SeekStart)
 
 		// Upload to s3
+		key = uuid.New().String()
 		if _, err := cfg.s3client.PutObject(r.Context(), &s3.PutObjectInput{
 			Bucket: &cfg.s3bucket,
 			Key: &key,

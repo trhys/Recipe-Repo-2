@@ -4,19 +4,28 @@
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div class="nav-bar">
-      <h1>
-        The Recipe Repository
-      </h1>
-          <button id="home" onclick="window.location.href='/'">Home</button>
-          <button id="logout-button" onclick="logout()">Logout</button>
-          <button id="login-btn" type="button" onclick="window.location.href='/login'">Login</button>
-          <button id="signup-btn" type="button" onclick="window.location.href='/signup'">Sign Up</button>
-    </div>
-<p>Welcome to The Recipe Repository!</p>
-<p>This will be a recipe sharing and shopping planner application.</p>
+  <div class="navbar">
+          <div class="heading">
+          <h1>The Recipe Repository</h1>
+          </div>
 
-<div id="user-recipes">
+          <a href="/">Home</a>
+          
+          <div class="nav-dropdown">
+                  <button class="dropbtn">Create
+                          <i class="fa fa-caret-down"></i>
+                  </button>
+                  <div class="dropbtn-content">
+                          <a href="/recipe-creator">New Recipe</a>
+                          <a href="/shopping-list-creator">New Shopping List</a>
+                  </div>
+          </div>
+          <button class="navbtn" id="logout-button" onclick="logout()">Logout</button>
+          <button class="navbtn" id="login-btn" type="button" onclick="window.location.href='/login'">Login</button>
+          <button class="navbtn" id="signup-btn" type="button" onclick="window.location.href='/signup'">Sign Up</button>
+  </div>
+
+  <div id="user-recipes">
 	<h2> {{ .Name }} </h2>
 	<hr>
 	<ul> {{ range .Recipes }}

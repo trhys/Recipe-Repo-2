@@ -2,16 +2,17 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
-	"database/sql"
 
 	_ "github.com/lib/pq"
         "github.com/joho/godotenv"
 	"github.com/trhys/Recipe-Repo-2/internal/database"
+	"github.com/trhys/Recipe-Repo-2/internal/migrations"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/config"
 )
@@ -51,6 +52,11 @@ func main() {
 	if appDirectory == "" {
 		log.Fatal("Failed to load app directory")
 	}
+
+	adminDir := os.Getenv("ADMIN_DIR")
+	if adminDir == "" {
+		log.Fatal("Failed to load admin directory")
+	}
 	
 	s3bucket := os.Getenv("S3_BUCKET")
 	if s3bucket == "" {
@@ -65,6 +71,11 @@ func main() {
 	s3cdn := os.Getenv("S3_CDN")
 	if s3cdn == "" {
 		log.Fatal("Failed to load s3 CDN")
+	}
+
+	imagePlaceholder := os.Getenv("IMAGE_PLACEHOLDER")
+	if imagePlaceholder == "" {
+		log.Fatal("Failed to load placehold for images")
 	}
 
 	// Connect to database
@@ -85,7 +96,7 @@ func main() {
 
 	// Load api config
 	
-	config := apiConfig{
+	cfg := apiConfig{
 		db: database.New(db),
 		platform: platform,
 		secret: secret,
@@ -94,6 +105,20 @@ func main() {
 		s3bucket: s3bucket,
 		s3region: s3region,
 		s3cdn: s3cdn,
+		imagePlaceholder: imagePlaceholder,
+	}
+
+	// Check database seeding
+	log.Println("Checking database seeding...")
+	var count int
+	db.QueryRow("SELECT COUNT(*) FROM ingredients").Scan(&count)
+	if count < 99 {
+		log.Println("Unseeded!")
+		if err := migrations.SeedDB("setup.json", imagePlaceholder, db, context.Background()); err != nil {
+			log.Panic("Failed to seed database")
+		}
+	} else {
+		log.Println("Database already seeded, continue...")
 	}
 	
 	// Load server
@@ -108,37 +133,40 @@ func main() {
 	appHandler := http.FileServer(http.Dir(appDirectory))
 	mux.Handle("/", appHandler)
 
+	adminHandler := http.StripPrefix("/admin", http.FileServer(http.Dir(adminDir)))
+	mux.Handle("/admin/", adminHandler)
+
 	// Handlers :
 
 	// Web app eps
-	mux.HandleFunc("GET /recipes/{recipe_id}", config.handlerGetRecipe)
-	mux.HandleFunc("GET /users/{user_id}", config.handlerGetUsersRecipes)
-	mux.HandleFunc("GET /shoppinglists/{shopping_list_id}", config.handlerGetShoppingList)
+	mux.HandleFunc("GET /recipes/{recipe_id}", cfg.handlerGetRecipe)
+	mux.HandleFunc("GET /users/{user_id}", cfg.handlerGetUsersRecipes)
+	mux.HandleFunc("GET /shoppinglists/{shopping_list_id}", cfg.handlerGetShoppingList)
 
 	// User eps
-	mux.HandleFunc("GET /api/users/{user_id}", config.handlerGetUser)
-	mux.HandleFunc("POST /api/new_user", config.handlerCreateUser)
-	mux.HandleFunc("POST /api/login", config.handlerLogin)
-	mux.HandleFunc("POST /api/admin/reset", config.handlerReset)
+	mux.HandleFunc("GET /api/users/{user_id}", cfg.handlerGetUser)
+	mux.HandleFunc("POST /api/new_user", cfg.handlerCreateUser)
+	mux.HandleFunc("POST /api/login", cfg.handlerLogin)
+	mux.HandleFunc("POST /api/admin/reset", cfg.handlerReset)
 
 	// Recipe eps
-	mux.HandleFunc("GET /api/recipes/by_user/{user_id}", config.handlerGetUsersRecipes)
-	mux.HandleFunc("GET /api/recipes/{recipe_id}", config.handlerGetRecipe)
-	mux.HandleFunc("GET /api/recipes", config.handlerGetRecipeList)
-	mux.HandleFunc("POST /api/new_recipe", config.handlerCreateRecipe)
+	mux.HandleFunc("GET /api/recipes/by_user/{user_id}", cfg.handlerGetUsersRecipes)
+	mux.HandleFunc("GET /api/recipes/{recipe_id}", cfg.handlerGetRecipe)
+	mux.HandleFunc("GET /api/recipes", cfg.handlerGetRecipeList)
+	mux.HandleFunc("POST /api/new_recipe", cfg.handlerCreateRecipe)
 
 	// Ingredient eps
-	mux.HandleFunc("POST /api/admin/new_ingredient", config.handlerCreateIngredient)
-	mux.HandleFunc("GET /api/get_ingredients", config.handlerGetIngredientBase)
+	mux.HandleFunc("POST /api/admin/new_ingredient", cfg.handlerCreateIngredient)
+	mux.HandleFunc("GET /api/get_ingredients", cfg.handlerGetIngredientBase)
 
 	// Shopping list eps
-	mux.HandleFunc("POST /api/new_shopping_list", config.handlerCreateShoppingList)
-	mux.HandleFunc("POST /api/add_to_list", config.handlerAddToShoppingList)
-	mux.HandleFunc("GET /api/shoppinglists/{shopping_list_id}", config.handlerGetShoppingList)
+	mux.HandleFunc("POST /api/new_shopping_list", cfg.handlerCreateShoppingList)
+	mux.HandleFunc("POST /api/add_to_list", cfg.handlerAddToShoppingList)
+	mux.HandleFunc("GET /api/shoppinglists/{shopping_list_id}", cfg.handlerGetShoppingList)
 
 	// Token eps
-	mux.HandleFunc("POST /api/tokens/refresh", config.handlerRefreshToken)
-	mux.HandleFunc("POST /api/tokens/revoke", config.handlerRevokeToken)
+	mux.HandleFunc("POST /api/tokens/refresh", cfg.handlerRefreshToken)
+	mux.HandleFunc("POST /api/tokens/revoke", cfg.handlerRevokeToken)
 
 	// :
 

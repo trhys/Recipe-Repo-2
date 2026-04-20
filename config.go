@@ -16,4 +16,5 @@ type apiConfig struct {
 	s3bucket	string
 	s3region	string
 	s3cdn		string
+	imagePlaceholder string
 }

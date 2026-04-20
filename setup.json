@@ -1,0 +1,304 @@
+{
+    "ingredients":[
+        {
+            "name":"Salt"
+        },
+        {
+            "name":"Black Pepper"
+        },
+        {
+            "name":"Garlic"
+        },
+        {
+            "name":"Onion"
+        },
+        {
+            "name":"Olive Oil"
+        },
+        {
+            "name":"Butter"
+        },
+        {
+            "name":"Eggs"
+        },
+        {
+            "name":"Water"
+        },
+        {
+            "name":"All-Purpose Flour"
+        },
+        {
+            "name":"Sugar"
+        },
+        {
+            "name":"Lemon Juice"
+        },
+        {
+            "name":"Chicken Breast"
+        },
+        {
+            "name":"Milk"
+        },
+        {
+            "name":"Soy Sauce"
+        },
+        {
+            "name":"Ginger"
+        },
+        {
+            "name":"Rice"
+        },
+        {
+            "name":"Potato"
+        },
+        {
+            "name":"Tomato"
+        },
+        {
+            "name":"Carrot"
+        },
+        {
+            "name":"Parsley"
+        },
+        {
+            "name":"Cilantro"
+        },
+        {
+            "name":"Basil"
+        },
+        {
+            "name":"Thyme"
+        },
+        {
+            "name":"Vegetable Oil"
+        },
+        {
+            "name":"Honey"
+        },
+        {
+            "name":"White Vinegar"
+        },
+        {
+            "name":"Cumin"
+        },
+        {
+            "name":"Paprika"
+        },
+        {
+            "name":"Cinnamon"
+        },
+        {
+            "name":"Chili Powder"
+        },
+        {
+            "name":"Parmesan Cheese"
+        },
+        {
+            "name":"Cheddar Cheese"
+        },
+        {
+            "name":"Heavy Cream"
+        },
+        {
+            "name":"Sour Cream"
+        },
+        {
+            "name":"Ground Beef"
+        },
+        {
+            "name":"Bacon"
+        },
+        {
+            "name":"Chicken Stock"
+        },
+        {
+            "name":"Baking Powder"
+        },
+        {
+            "name":"Baking Soda"
+        },
+        {
+            "name":"Vanilla Extract"
+        },
+        {
+            "name":"Bread"
+        },
+        {
+            "name":"Pasta"
+        },
+        {
+            "name":"Bell Pepper"
+        },
+        {
+            "name":"Celery"
+        },
+        {
+            "name":"Spinach"
+        },
+        {
+            "name":"Mushroom"
+        },
+        {
+            "name":"Green Beans"
+        },
+        {
+            "name":"Corn"
+        },
+        {
+            "name":"Broccoli"
+        },
+        {
+            "name":"Cucumber"
+        },
+        {
+            "name":"Avocado"
+        },
+        {
+            "name":"Lime Juice"
+        },
+        {
+            "name":"Mayonnaise"
+        },
+        {
+            "name":"Ketchup"
+        },
+        {
+            "name":"Mustard"
+        },
+        {
+            "name":"Worcestershire Sauce"
+        },
+        {
+            "name":"Hot Sauce"
+        },
+        {
+            "name":"Red Pepper Flakes"
+        },
+        {
+            "name":"Oregano"
+        },
+        {
+            "name":"Rosemary"
+        },
+        {
+            "name":"Bay Leaf"
+        },
+        {
+            "name":"Sesame Oil"
+        },
+        {
+            "name":"Coconut Milk"
+        },
+        {
+            "name":"Brown Sugar"
+        },
+        {
+            "name":"Maple Syrup"
+        },
+        {
+            "name":"Walnuts"
+        },
+        {
+            "name":"Almonds"
+        },
+        {
+            "name":"Peanut Butter"
+        },
+        {
+            "name":"Black Beans"
+        },
+        {
+            "name":"Chickpeas"
+        },
+        {
+            "name":"Lentils"
+        },
+        {
+            "name":"Pork Chops"
+        },
+        {
+            "name":"Shrimp"
+        },
+        {
+            "name":"Salmon"
+        },
+        {
+            "name":"Canned Tuna"
+        },
+        {
+            "name":"Scallions"
+        },
+        {
+            "name":"Shallot"
+        },
+        {
+            "name":"Zucchini"
+        },
+        {
+            "name":"Eggplant"
+        },
+        {
+            "name":"Cabbage"
+        },
+        {
+            "name":"Kale"
+        },
+        {
+            "name":"Apple"
+        },
+        {
+            "name":"Banana"
+        },
+        {
+            "name":"Strawberry"
+        },
+        {
+            "name":"Yeast"
+        },
+        {
+            "name":"Red Wine Vinegar"
+        },
+        {
+            "name":"Balsamic Vinegar"
+        },
+        {
+            "name":"Tomato Paste"
+        },
+        {
+            "name":"Greek Yogurt"
+        },
+        {
+            "name":"Cream Cheese"
+        },
+        {
+            "name":"Ricotta Cheese"
+        },
+        {
+            "name":"Beef Stock"
+        },
+        {
+            "name":"Turmeric"
+        },
+        {
+            "name":"Coriander"
+        },
+        {
+            "name":"Cayenne Pepper"
+        },
+        {
+            "name":"Nutmeg"
+        },
+        {
+            "name":"Cloves"
+        },
+        {
+            "name":"Star Anise"
+        },
+        {
+            "name":"Cornstarch"
+        },
+        {
+            "name":"Gelatin"
+        }
+    ]
+}
