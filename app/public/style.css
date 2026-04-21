@@ -15,7 +15,7 @@
   align-items: center;
 }
 
-.navbar a, .navbar .navbtn {
+.navbar a, .navbar .navbtn, .requires-login {
   float: left;
   font-size: 16px;
   color: white;
@@ -24,7 +24,7 @@
   text-decoration: none;
 }
 
-.navbar .navbtn {
+.navbar .navbtn, .requires-login {
   background: none;
   border: none;
   cursor: pointer;   
@@ -47,7 +47,7 @@
   margin: 0; /* Important for vertical align on mobile phones */
 }
 
-.navbar a:hover, .navbar .navbtn:hover, .nav-dropdown:hover .dropbtn {
+.navbar a:hover, .navbar .navbtn:hover, .nav-dropdown:hover .dropbtn, .requires-login:hover {
   background-color: red;
 }
 

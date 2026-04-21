@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"path/filepath"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"time"
@@ -150,7 +152,7 @@ func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, 201, nil)
 }
 
-// Get User by ID
+// Get User by ID without recipe or shopping list info
 func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("user_id")
 	user_id, err := uuid.Parse(id)
@@ -174,4 +176,59 @@ func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, 200, res)
+}
+
+// Get user profile - public
+type userRecipeList struct{
+        Recipes []recipe `json:"recipes"`
+        Name    string `json:"name"`
+}
+
+func (cfg *apiConfig) handlerGetUserProfile(w http.ResponseWriter, r *http.Request) {
+        val := r.PathValue("user_id")
+        id, err := uuid.Parse(val)
+        if err != nil {
+                respondFail(w, 404, "Invalid uuid", err)
+                return
+        }
+
+        user, err := cfg.db.GetUser(r.Context(), id)
+        if err != nil {
+                respondFail(w, 404, "Couldn't find user", err)
+                return
+        }
+
+        recipes, err := cfg.db.GetUsersRecipes(r.Context(), user.ID)
+        if err != nil {
+                respondFail(w, 404, "Couldn't find recipes", err)
+                return
+        }
+
+        list := userRecipeList{}
+        for _, rec := range recipes {
+                list.Recipes = append(list.Recipes, recipe{
+                        ID: rec.ID,
+                        Title: rec.Title,
+                        CreatedAt: rec.CreatedAt,
+                        UpdatedAt: &rec.UpdatedAt,
+                        UserID: &rec.UserID,
+                        Author: user.Name,
+                        ImageKey: rec.ImageKey,
+                        ImageURL: fmt.Sprintf("%s/%s", cfg.s3cdn, rec.ImageKey),
+                })
+        }
+        list.Name = user.Name
+
+        if r.Header.Get("Accept") == "application/json" {
+                respondJSON(w, 200, list)
+                return
+        }
+
+        tmpl, err := template.ParseFiles(filepath.Join("app", "templates", "user_page.html"))
+        if err != nil {
+                respondFail(w, 500, "Something went wrong", err)
+                return
+        }
+
+        tmpl.Execute(w, list)
 }

@@ -4,34 +4,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   const token = localStorage.getItem('token');
   const refresher = localStorage.getItem('refresh_token');
 
-  loginBtn = document.getElementById('login-btn')
-  signupBtn = document.getElementById('signup-btn')
-  logoutBtn = document.getElementById('logout-button')
   recipeCreator = document.getElementById('recipe-creator')
   createNew = document.getElementById('create-new')
   recipeList = document.getElementById('recipes-section')
 
-  if (loginBtn) {
-	  if (token) {
-		loginBtn.style.display = 'none';
-	  } else {
-		loginBtn.style.display = 'block';
-	  }
-  }
-  if (signupBtn) {
+  requiresLogin = document.getElementsByClassName('requires-login')
 	if (token) {
-		signupBtn.style.display = 'none';
+		for (const r of requiresLogin) {
+			r.style.display = 'block'
+		}
 	} else {
-		signupBtn.style.display = 'block';
+		for (const r of requiresLogin) {
+			r.style.display = 'none'
+		}
 	}
-  }
-  if (logoutBtn) {
+
+ loginbtn = document.getElementsByClassName('loginbtn')
 	if (token) {
-		logoutBtn.style.display = 'block';
+		for (const r of loginbtn) {
+			r.style.display = 'none'
+		}
 	} else {
-		logoutBtn.style.display = 'none';
+		for (const r of loginbtn) {
+			r.style.display = 'block'
+		}
 	}
-  }
+		
   if (recipeCreator) {
 	if (token) {
 		recipeCreator.style.display = 'block';
@@ -64,6 +62,64 @@ if (signupForm) {
 	signupForm.addEventListener('submit', async (event) => {
 		event.preventDefault();
 		await signup();
+	});
+}
+
+// Get user shopping lists
+async function viewShoppingLists() {
+	const token = localStorage.getItem('token');
+	const id = localStorage.getItem('user_id');
+
+	try {
+		const url = `/users/${id}/shoppinglists`
+		const body = {
+			method: 'GET',
+			headers: {
+				'Authorization': `Bearer ${token}`,
+				'Accept': 'text/html'
+			}
+		}
+		let response = await fetch(url, body);
+
+		if (response.ok) {
+			const newHTML = await response.text();
+
+			document.open();
+			document.write(newHTML);
+			document.close();
+			window.history.pushState({}, '', `users/${id}/shoppinglists`);
+			return
+		}
+
+		const refreshRes = await fetch('/api/tokens/refresh', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${localStorage.getItem('refresh_token')}`,
+			},
+		});
+
+		if (!refreshRes.ok) throw new Error("Session expired");
+		const data = await refreshRes.json();
+		if (data.token) {
+			localStorage.setItem('token', data.token);
+		}
+
+		response = await fetch(url, body);
+
+		if (!response.ok) {
+			const data = await response.json();
+			throw new Error(`Failed to renew token: ${data.error}`);
+		}
+	} catch (error) {
+		console.error('Error:', error);
+	}
+}
+		
+shopListBtn = document.getElementById('shopping-lists-btn')
+if (shopListBtn) {
+	shopListBtn.addEventListener('click', async (event) => {
+		event.preventDefault();
+		await viewShoppingLists();
 	});
 }
 

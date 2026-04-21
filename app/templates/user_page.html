@@ -2,6 +2,7 @@
 <title>The Recipe Repository</title>
 <script src="/app.js" defer></script>
 <link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
 </head>
 <body>
   <div class="navbar">
@@ -12,17 +13,18 @@
           <a href="/">Home</a>
           
           <div class="nav-dropdown">
-                  <button class="dropbtn">Create
+                  <button class="requires-login">Create
                           <i class="fa fa-caret-down"></i>
                   </button>
                   <div class="dropbtn-content">
-                          <a href="/recipe-creator">New Recipe</a>
-                          <a href="/shopping-list-creator">New Shopping List</a>
+                          <a class="requires-login" href="/recipe-creator">New Recipe</a>
+                          <a class="requires-login" href="/shopping-list-creator">New Shopping List</a>
                   </div>
           </div>
-          <button class="navbtn" id="logout-button" onclick="logout()">Logout</button>
-          <button class="navbtn" id="login-btn" type="button" onclick="window.location.href='/login'">Login</button>
-          <button class="navbtn" id="signup-btn" type="button" onclick="window.location.href='/signup'">Sign Up</button>
+	   <button class="requires-login" id="shopping-lists-btn">Shopping Lists</button>
+          <button class="requires-login" id="logout-button" onclick="logout()">Logout</button>
+          <a href="/login" class="loginbtn">Log In</a>
+          <a href="/signup" class="loginbtn">Sign Up</a>
   </div>
 
   <div id="user-recipes">

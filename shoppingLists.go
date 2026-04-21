@@ -12,6 +12,13 @@ import (
 	"github.com/trhys/Recipe-Repo-2/internal/database"
 )
 
+type shoppingList struct{
+	ID		uuid.UUID 	`json:"id"`
+	Name		string		`json:"name"`
+	CreatedAt	time.Time	`json:"created_at"`
+	UpdatedAt	time.Time	`json:"updated_at"`
+} 
+
 func (cfg *apiConfig) handlerCreateShoppingList(w http.ResponseWriter, r *http.Request) {
 	var req struct{
 		Name	string `json:"name"`
@@ -163,4 +170,74 @@ func (cfg *apiConfig) handlerGetShoppingList(w http.ResponseWriter, r *http.Requ
         }
 
         tmpl.Execute(w, response)
+}
+
+func (cfg *apiConfig) handlerGetUsersShoppingLists(w http.ResponseWriter, r *http.Request) {
+	val := r.PathValue("user_id")
+	id, err := uuid.Parse(val)
+        if err != nil {
+                respondFail(w, 404, "Invalid uuid", err)
+                return
+        }
+
+        user, err := cfg.db.GetUser(r.Context(), id)
+        if err != nil {
+                respondFail(w, 404, "Couldn't find user", err)
+                return
+        }
+
+	// Authorization
+        token, err := auth.GetBearerToken(r.Header)
+        if err != nil {
+                respondFail(w, 401, "Failed to retrieve bearer token", err)
+                return
+        }
+
+        subject, err := auth.ValidateJWT(token, cfg.secret)
+        if err != nil {
+                respondFail(w, 401, "Couldn't validate token", err)
+                return
+        }
+
+        if subject != user.ID {
+                respondFail(w, 401, "Unauthorized access", nil)
+                return
+        }
+
+	// Authorized - Get lists
+
+	lists, err := cfg.db.GetUserLists(r.Context(), user.ID)
+	if err != nil {
+		respondFail(w, 404, "Couldn't retrieve user's shopping lists", err)
+		return
+	}
+
+	var res struct{
+		Name	string `json:"name"`
+		Lists	[]shoppingList `json:"shopping_lists"`
+	}
+
+	res.Name = user.Name
+
+	for _, list := range lists {
+		res.Lists = append(res.Lists, shoppingList{
+			ID: list.ID,
+			Name: list.Name,
+			CreatedAt: list.CreatedAt,
+			UpdatedAt: list.UpdatedAt,
+		})
+	}
+
+	if r.Header.Get("Accept") == "application/json" {
+                respondJSON(w, 200, res)
+                return
+        }
+
+        tmpl, err := template.ParseFiles(filepath.Join("app", "templates", "user_shopping_lists.html"))
+        if err != nil {
+                respondFail(w, 500, "Something went wrong", err)
+                return
+        }
+
+        tmpl.Execute(w, res)
 }

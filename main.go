@@ -138,20 +138,15 @@ func main() {
 
 	// Handlers :
 
-	// Web app eps
-	mux.HandleFunc("GET /recipes/{recipe_id}", cfg.handlerGetRecipe)
-	mux.HandleFunc("GET /users/{user_id}", cfg.handlerGetUsersRecipes)
-	mux.HandleFunc("GET /shoppinglists/{shopping_list_id}", cfg.handlerGetShoppingList)
-
 	// User eps
+	mux.HandleFunc("GET /users/{user_id}", cfg.handlerGetUserProfile)
 	mux.HandleFunc("GET /api/users/{user_id}", cfg.handlerGetUser)
 	mux.HandleFunc("POST /api/new_user", cfg.handlerCreateUser)
 	mux.HandleFunc("POST /api/login", cfg.handlerLogin)
 	mux.HandleFunc("POST /api/admin/reset", cfg.handlerReset)
 
 	// Recipe eps
-	mux.HandleFunc("GET /api/recipes/by_user/{user_id}", cfg.handlerGetUsersRecipes)
-	mux.HandleFunc("GET /api/recipes/{recipe_id}", cfg.handlerGetRecipe)
+	mux.HandleFunc("GET /recipes/{recipe_id}", cfg.handlerGetRecipe)
 	mux.HandleFunc("GET /api/recipes", cfg.handlerGetRecipeList)
 	mux.HandleFunc("POST /api/new_recipe", cfg.handlerCreateRecipe)
 
@@ -160,9 +155,10 @@ func main() {
 	mux.HandleFunc("GET /api/get_ingredients", cfg.handlerGetIngredientBase)
 
 	// Shopping list eps
+	mux.HandleFunc("GET /shoppinglists/{shopping_list_id}", cfg.handlerGetShoppingList)
+	mux.HandleFunc("GET /users/{user_id}/shoppinglists", cfg.handlerGetUsersShoppingLists)
 	mux.HandleFunc("POST /api/new_shopping_list", cfg.handlerCreateShoppingList)
 	mux.HandleFunc("POST /api/add_to_list", cfg.handlerAddToShoppingList)
-	mux.HandleFunc("GET /api/shoppinglists/{shopping_list_id}", cfg.handlerGetShoppingList)
 
 	// Token eps
 	mux.HandleFunc("POST /api/tokens/refresh", cfg.handlerRefreshToken)
