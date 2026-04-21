@@ -18,13 +18,20 @@ This readme assumes for the most part you are running on Unix or WSL.
 
 **Note:** This backend does use AWS for S3 and CDN. It's not strictly necessary so some placeholder values won't break it, but recipe images require these to be set up.
 
-## Quickest Start
+#### Prerequisites
+
+- Git
+- Docker (recommended)
+- Go (if not using docker)
+
+## Quick Start
 
 1. ```git clone https://github.com/trhys/Recipe-Repo-2.git```
 2. ```docker compose up```
 3. ???
 4. profit
 
+In reality, run docker compose from the cloned root. Docker will automatically start the container and bind port 8080. See the demo web app @ http://localhost:8080/
    
 ---
 
@@ -203,3 +210,7 @@ Some responses give ingredients in this shape:
   ```
 
 TODO: ingredient, shopping list, token
+
+## Contributing
+
+todo
