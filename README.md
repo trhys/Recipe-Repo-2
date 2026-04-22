@@ -58,6 +58,7 @@ For docker: ```postgres://postgres:postgres@db:5432/recipe_repo?sslmode=disable`
 - SECRET= this is what the auth package will use to validate tokens. keep it secret. keep it safe.
 - JWT_DUR= this sets the expiry on authorization tokens. it is in seconds (```3600``` = 1 hour)
 - APP_DIR= root path for the frontend. probably doesn't need changed but I won't tell you no
+- ADMIN_DIR= path to the admin folder in /app. Separate from the base fileserver
 - S3_BUCKET= your s3 bucket for image file storage. you'll need to get this from AWS
 - S3_REGION= your s3 region for your bucket
 - S3_CDN= the cdn url from AWS if it's set up
@@ -95,7 +96,7 @@ For docker: ```postgres://postgres:postgres@db:5432/recipe_repo?sslmode=disable`
 
 If your server is running and everything works correctly, go to ```http://localhost:8080/``` to view the demo web application.
 
-## API
+## API DOCUMENTATION
 
 **A note on response shapes:** because most of the functionality uses the same basic shape, there are only a couple structs that shape the JSON data and some is omitted case to case based on the endpoint.
 
@@ -112,6 +113,7 @@ If your server is running and everything works correctly, go to ```http://localh
      "name" : user display name,
   }
   ```
+---
 
 - "GET /api/users/{user_id}" : responds with JSON user information
 
@@ -150,6 +152,7 @@ If your server is running and everything works correctly, go to ```http://localh
   ```
   
 - "POST /api/admin/reset" : takes no request body, just requires the PLATFORM env variable to be set to "dev". Empties the users table which will cascade onto mostly everything else. Use this to reset the database if desired.
+---
 
 #### Recipe Endpoints
 
@@ -208,8 +211,108 @@ Some responses give ingredients in this shape:
     "ingredients": array of ingredients,
   }
   ```
+---
 
-TODO: ingredient, shopping list, token
+#### Ingredient Endpoints
+
+##### Basic ingredient response shape: 
+```
+{
+   "id': uuid,
+   "name": display name,
+   "image_key": key to aws asset,
+   "created_at": timestamp of creation,
+   "updated_at": timestamp of last update,
+}
+```
+---
+
+- "POST /api/admin/new_ingredient" - create new ingredient. currently an admin only feature but will change. 'admin' is a column in the users table that is checked here
+  REQUEST:
+  ```
+  {
+     "name": display name for the ingredient,
+  }
+  ```
+  This ep will take more in the future as other API integrations occur.
+
+- "GET /api/get_ingredients" - responds with all the ingredients available in the database. Will probably make some changes as this is likely not scalable.
+  RESPONSE:
+  ```
+  {
+     "ingredients": array of basic ingredient responses,
+  }
+  ```
+---
+
+#### Shopping list Endpoints
+
+##### Basic shopping list response shape: 
+```
+{
+   "id": uuid,
+   "name": display name,
+   "created_at": timestamp of creation,
+   "updated_at": timestamp of last update,
+}
+```
+---
+
+- "GET /shoppinglists/{shopping_list_id} - takes "Accept" header: if application/json:
+  RESPONSE:
+  ```
+  {
+     "id": uuid,
+	  "name": display name,
+     "created_at": timestamp of creation,
+     "recipes": array of recipe responses,
+     "quantity": map of recipes to quantity selected,
+  }
+  ```
+  Otherwise renders HTML template.
+  
+- "GET /users/{user_id}/shoppinglists" - gets shopping lists for user. takes header: Authorization Bearer $token, && "Accept"
+  if Accept: application/json:
+  ```
+  {
+     "name": user's display name,
+     "shopping_lists": array of shopping list responses,
+  }
+  ```
+  Otherwise render HTML
+  
+- "POST /api/new_shopping_list" - create new shopping list. takes Authorization Bearer token header
+  REQUEST:
+  ```
+  {
+     "name": shopping list name,
+  }
+  ```
+  Responds with created list
+  
+- "POST /api/add_to_list" - add recipe to list
+  REQUEST:
+  ```
+  {
+     "shopping_list_id": uuid of shopping list,
+     "recipe_id": uuid of recipe,
+     "quantity": number to add,
+  }
+  ```
+  No response body given
+---
+
+#### Token Endpoints
+
+- "POST /api/tokens/refresh" - takes Authorization Bearer token header, where token is a refresh token. Checks token in db and returns new JWT if valid
+  RESPONSE:
+  ```
+  {
+     "token": JWT,
+  }
+  ```
+  
+- "POST /api/tokens/revoke" - takes Authorization Bearer token, where token is a refresh token. Returns no body, just revokes existing token and respond with status 204
 
 ## Contributing
 
