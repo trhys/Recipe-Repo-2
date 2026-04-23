@@ -11,6 +11,13 @@ import (
 	"github.com/google/uuid"
 )
 
+type Conversion struct {
+	IngredientID uuid.UUID
+	FromUnit     string
+	ToUnit       string
+	Ratio        float32
+}
+
 type Ingredient struct {
 	ID        uuid.UUID
 	Name      string
@@ -45,6 +52,10 @@ type RefreshToken struct {
 	UserID    uuid.UUID
 }
 
+type RetailUnit struct {
+	Name string
+}
+
 type ShoppingList struct {
 	ID        uuid.UUID
 	Name      string
@@ -57,12 +68,18 @@ type ShoppingListIngredient struct {
 	ShoppingListID uuid.UUID
 	IngredientID   uuid.UUID
 	Quantity       float32
+	Units          string
 }
 
 type ShoppingListRecipe struct {
 	ShoppingListID uuid.UUID
 	RecipeID       uuid.UUID
 	Quantity       int32
+}
+
+type Unit struct {
+	Name         string
+	Abbreviation string
 }
 
 type User struct {

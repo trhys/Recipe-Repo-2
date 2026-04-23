@@ -159,6 +159,7 @@ func main() {
 	mux.HandleFunc("GET /users/{user_id}/shoppinglists", cfg.handlerGetUsersShoppingLists)
 	mux.HandleFunc("POST /api/new_shopping_list", cfg.handlerCreateShoppingList)
 	mux.HandleFunc("POST /api/add_to_list", cfg.handlerAddToShoppingList)
+	mux.HandleFunc("POST /shoppinglists/printlist", cfg.handlerPrintList)
 
 	// Token eps
 	mux.HandleFunc("POST /api/tokens/refresh", cfg.handlerRefreshToken)

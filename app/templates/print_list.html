@@ -20,9 +20,10 @@
                   </button>
                   <div class="dropbtn-content">
                           <a href="/recipe-creator">New Recipe</a>
+			  <a href="/shopping-list-creator">New Shopping List</a>
                   </div>
           </div>
-	   <button class="requires-login" id="shopping-lists-btn">Shopping Lists</button>
+           <button class="requires-login" id="shopping-lists-btn">Shopping Lists</button>
           <button class="navbtn" id="logout-button" onclick="logout()">Logout</button>
   </div>
 
@@ -30,27 +31,24 @@
     <h2>
       {{ .Name }}
       <hr></h2>
-
       <h4>
-         Created: {{ .Created.Format "Jan 02, 2006" }}
       </h4>
     
-      <button class="printlist" id="print-shopping-list" value="{{ .ID }}">Print</button>
-      <div class="recipes_in_list">
-	<ul id="recipes">
-		{{ range .Recipes }}
-		<li> <a href="/recipes/{{ .ID }}">{{ .Title }}</a> by <a href="/users/{{ .UserID }}">{{ .Author }}</a> + {{ .Quantity }}</li>
-		{{ else }}
-		<li>No recipes have been added...</li>
-		{{ end }}
-	</ul>
-	</div>
-    
-<script>
-
-
-
-</script>
-    
+      <div class="ingredients_in_list">
+        <ul id="ingredients">
+                {{ range .Items }}
+                <li>
+			{{ .Name }}
+			{{ .FromUnit }}
+			{{ .ToUnit }}
+			{{ .Ratio }}
+			{{ .Units }}
+			{{ .Quantity }}
+		</li>
+                {{ else }}
+                <li>No recipes have been added...</li>
+                {{ end }}
+        </ul>
+        </div>
 </body>
 </html>

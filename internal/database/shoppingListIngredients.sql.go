@@ -12,11 +12,12 @@ import (
 )
 
 const addToShoppingList = `-- name: AddToShoppingList :exec
-INSERT INTO shopping_list_ingredients (shopping_list_id, ingredient_id, quantity)
+INSERT INTO shopping_list_ingredients (shopping_list_id, ingredient_id, quantity, units)
 VALUES (
 	$1,
 	$2,
-	$3
+	$3,
+	$4
 )
 `
 
@@ -24,9 +25,15 @@ type AddToShoppingListParams struct {
 	ShoppingListID uuid.UUID
 	IngredientID   uuid.UUID
 	Quantity       float32
+	Units          string
 }
 
 func (q *Queries) AddToShoppingList(ctx context.Context, arg AddToShoppingListParams) error {
-	_, err := q.db.ExecContext(ctx, addToShoppingList, arg.ShoppingListID, arg.IngredientID, arg.Quantity)
+	_, err := q.db.ExecContext(ctx, addToShoppingList,
+		arg.ShoppingListID,
+		arg.IngredientID,
+		arg.Quantity,
+		arg.Units,
+	)
 	return err
 }

@@ -58,6 +58,7 @@ func (cfg *apiConfig) handlerAddToShoppingList(w http.ResponseWriter, r *http.Re
 		ShoppingListID	uuid.UUID `json:"shopping_list_id"`
 		RecipeID	uuid.UUID `json:"recipe_id"`
 		Quantity	int32	  `json:"quantity"`
+		Units		string	  `json:"units"`
 	}
 
 	// AUTH
@@ -91,6 +92,7 @@ func (cfg *apiConfig) handlerAddToShoppingList(w http.ResponseWriter, r *http.Re
 			ShoppingListID: req.ShoppingListID,
 			IngredientID: ingredient.IngredientID,
 			Quantity: ingredient.Quantity,
+			Units: ingredient.Unit,
 		})
 		if err != nil {
 			respondFail(w, 500, "Something went wrong", err)
@@ -250,7 +252,8 @@ func (cfg *apiConfig) handlerPrintList(w http.ResponseWriter, r *http.Request) {
                 return
         }
 
-        if userID, err := auth.ValidateJWT(token, cfg.secret); err != nil {
+        subject, err := auth.ValidateJWT(token, cfg.secret)
+	if err != nil {
                 respondFail(w, 401, "Invalid token", err)
                 return
         }
@@ -266,5 +269,45 @@ func (cfg *apiConfig) handlerPrintList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Verify ownership against JWT subject
+	list, err := cfg.db.GetListOwner(r.Context(), req.ID)
+	if err != nil {
+		respondFail(w, 401, "Couldn't validate ownership", err)
+		return
+	}
+
+	if list.UserID != subject {
+		respondFail(w, 401, "Unauthorized access", err)
+		return
+	}
+
+	// Get list
+	printed, err := cfg.db.PrintList(r.Context(), req.ID)
+	if err != nil {
+		respondFail(w, 404, "Couldn't locate list", err)
+		return
+	}
+
+	var res struct{
+		Name string `json:"name"`
+		Items []database.PrintListRow `json:"items"`
+	}
+
+	res.Name = list.Name
+	res.Items = printed
+
+	if r.Header.Get("Accept") == "application/json" {
+		respondJSON(w, 200, res)
+		return
+	}
+
+	tmpl, err := template.ParseFiles(filepath.Join("app", "templates", "print_list.html"))
+        if err != nil {
+                respondFail(w, 500, "Something went wrong", err)
+                return
+        }
+
+        tmpl.Execute(w, res)
+}
 
 

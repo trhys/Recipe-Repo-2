@@ -21,6 +21,11 @@ func SeedDB(file, ik string, db *sql.DB, ctx context.Context) error {
 	var ings struct {
 		Ingredients []struct{
 			Name string `json:"name"`
+			Conversions []struct {
+				From string `json:"from_unit"`
+				To string `json:"to_unit"`
+				Ratio float32 `json:"ratio"`
+			} `json:"conversions"`
 		} `json:"ingredients"`
 	}
 
@@ -33,13 +38,29 @@ func SeedDB(file, ik string, db *sql.DB, ctx context.Context) error {
 	dbConn := database.New(db)
 
 	for _, i := range ings.Ingredients {
-		query := database.CreateIngredientParams{
+		queryA := database.CreateIngredientParams{
 			Name: i.Name,
 			ImageKey: ik,
 		}
 
-		if _, err := dbConn.CreateIngredient(ctx, query); err != nil {
+		ingredient, err := dbConn.CreateIngredient(ctx, queryA) 
+		if err != nil {
 			log.Panic("Couldnt create ingredient during setup")
+		}
+
+		for _, conv := range i.Conversions {
+			queryB := database.CreateConversionParams{
+				IngredientID: ingredient.ID,
+				FromUnit: conv.From,
+				ToUnit: conv.To,
+				Ratio: conv.Ratio,
+			}
+
+			if err := dbConn.CreateConversion(ctx, queryB); err != nil {
+				log.Print(queryB)
+				log.Print(err.Error())
+				log.Panic("Couldn't create conversion")
+			}
 		}
 	}
 

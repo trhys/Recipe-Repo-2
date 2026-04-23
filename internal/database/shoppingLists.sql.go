@@ -40,6 +40,23 @@ func (q *Queries) CreateShoppingList(ctx context.Context, arg CreateShoppingList
 	return i, err
 }
 
+const getListOwner = `-- name: GetListOwner :one
+SELECT name, user_id FROM shopping_lists
+WHERE id = $1
+`
+
+type GetListOwnerRow struct {
+	Name   string
+	UserID uuid.UUID
+}
+
+func (q *Queries) GetListOwner(ctx context.Context, id uuid.UUID) (GetListOwnerRow, error) {
+	row := q.db.QueryRowContext(ctx, getListOwner, id)
+	var i GetListOwnerRow
+	err := row.Scan(&i.Name, &i.UserID)
+	return i, err
+}
+
 const getShoppingList = `-- name: GetShoppingList :one
 SELECT id, name, created_at, updated_at, user_id FROM shopping_lists
 WHERE id = $1
@@ -78,6 +95,52 @@ func (q *Queries) GetUserLists(ctx context.Context, userID uuid.UUID) ([]Shoppin
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const printList = `-- name: PrintList :many
+SELECT ingredients.name, conversions.from_unit, conversions.to_unit, conversions.ratio, shopping_list_ingredients.units, shopping_list_ingredients.quantity FROM ingredients
+INNER JOIN conversions ON conversions.ingredient_id = ingredients.id
+INNER JOIN shopping_list_ingredients ON shopping_list_ingredients.ingredient_id = ingredients.id
+WHERE shopping_list_ingredients.shopping_list_id = $1
+`
+
+type PrintListRow struct {
+	Name     string
+	FromUnit string
+	ToUnit   string
+	Ratio    float32
+	Units    string
+	Quantity float32
+}
+
+func (q *Queries) PrintList(ctx context.Context, shoppingListID uuid.UUID) ([]PrintListRow, error) {
+	rows, err := q.db.QueryContext(ctx, printList, shoppingListID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PrintListRow
+	for rows.Next() {
+		var i PrintListRow
+		if err := rows.Scan(
+			&i.Name,
+			&i.FromUnit,
+			&i.ToUnit,
+			&i.Ratio,
+			&i.Units,
+			&i.Quantity,
 		); err != nil {
 			return nil, err
 		}
