@@ -241,3 +241,30 @@ func (cfg *apiConfig) handlerGetUsersShoppingLists(w http.ResponseWriter, r *htt
 
         tmpl.Execute(w, res)
 }
+
+func (cfg *apiConfig) handlerPrintList(w http.ResponseWriter, r *http.Request) {
+	// AUTH
+        token, err := auth.GetBearerToken(r.Header)
+        if err != nil {
+                respondFail(w, 400, "Invalid header", err)
+                return
+        }
+
+        if userID, err := auth.ValidateJWT(token, cfg.secret); err != nil {
+                respondFail(w, 401, "Invalid token", err)
+                return
+        }
+
+	var req struct{
+		ID uuid.UUID `json:"id"`
+	}
+
+	// Decode body
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&req); err != nil {
+		respondFail(w, 400, "Failed to decode request body", err)
+		return
+	}
+
+
+
