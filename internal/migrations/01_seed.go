@@ -8,6 +8,7 @@ import (
 	"os"
 	
 	"github.com/trhys/Recipe-Repo-2/internal/database"
+	pb "github.com/schollz/progressbar/v3"
 )
 
 func SeedDB(file, ik string, db *sql.DB, ctx context.Context) error {
@@ -37,6 +38,7 @@ func SeedDB(file, ik string, db *sql.DB, ctx context.Context) error {
 
 	dbConn := database.New(db)
 
+	bar := pb.Default(int64(len(ings.Ingredients)))
 	for _, i := range ings.Ingredients {
 		queryA := database.CreateIngredientParams{
 			Name: i.Name,
@@ -45,10 +47,11 @@ func SeedDB(file, ik string, db *sql.DB, ctx context.Context) error {
 
 		ingredient, err := dbConn.CreateIngredient(ctx, queryA) 
 		if err != nil {
+			log.Printf("Failed on ingredient: %s - ERROR: %v", i.Name, err)
 			log.Panic("Couldnt create ingredient during setup")
 		}
 
-		for _, conv := range i.Conversions {
+		for index, conv := range i.Conversions {
 			queryB := database.CreateConversionParams{
 				IngredientID: ingredient.ID,
 				FromUnit: conv.From,
@@ -57,11 +60,10 @@ func SeedDB(file, ik string, db *sql.DB, ctx context.Context) error {
 			}
 
 			if err := dbConn.CreateConversion(ctx, queryB); err != nil {
-				log.Print(queryB)
-				log.Print(err.Error())
-				log.Panic("Couldn't create conversion")
+				log.Printf("Failed to create conversion at position: %d - %s", index, i.Name)
 			}
 		}
+		bar.Add(1)
 	}
 
 	log.Println("Setup successful...")
