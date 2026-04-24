@@ -15,6 +15,9 @@ import (
         "github.com/trhys/Recipe-Repo-2/internal/auth"
 )
 
+
+// NOTE: Probably will be removing creation here in some capacity in the future. Right now its useless, if i have ingredients to add im more likely to go ahead and write a migration with a large number of them. May allow users to create their own but for now it breaks the intention of integrating shopping apis.
+
 type ingredient struct {
         ID              uuid.UUID `json:"id"`
         Name            string `json:"name"`

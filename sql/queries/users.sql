@@ -10,11 +10,8 @@ VALUES (
 ) RETURNING id, created_at, email, name;
 
 -- name: GetUserHash :one
-SELECT id, name, hashed_pw FROM users
+SELECT id, email, name, hashed_pw FROM users
 WHERE email = $1;
-
--- name: ResetUsers :exec
-DELETE FROM users;
 
 -- name: GetUser :one
 SELECT id, created_at, updated_at, email, name FROM USERS
@@ -26,4 +23,9 @@ WHERE id = $1;
 
 -- name: CheckAdmin :one
 SELECT admin FROM users
+WHERE id = $1;
+
+-- name: MakeAdmin :exec
+UPDATE users
+SET admin = true
 WHERE id = $1;

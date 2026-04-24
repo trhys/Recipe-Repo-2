@@ -10,3 +10,7 @@ VALUES (
 
 -- name: GetIngredients :many
 SELECT id, name FROM ingredients;
+
+-- name: GetIngredientName :one
+SELECT name FROM ingredients
+WHERE id = $1;

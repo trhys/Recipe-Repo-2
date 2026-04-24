@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/trhys/Recipe-Repo-2/internal/auth"
 	"github.com/trhys/Recipe-Repo-2/internal/database"
+	"github.com/trhys/Recipe-Repo-2/internal/viewmodel"
 )
 
 type shoppingList struct{
@@ -132,7 +133,7 @@ func (cfg *apiConfig) handlerGetShoppingList(w http.ResponseWriter, r *http.Requ
 		ID	 uuid.UUID		`json:"id"`
 		Name	 string 		`json:"name"`
 		Created  time.Time		`json:"created_at"`
-		Recipes  []recipe 		`json:"recipes"`
+		Recipes  []viewmodel.Recipe	`json:"recipes"`
 		Quantity map[uuid.UUID]int32	`json:"quantity"`
 	}
 
@@ -150,7 +151,7 @@ func (cfg *apiConfig) handlerGetShoppingList(w http.ResponseWriter, r *http.Requ
 	}
 
 	for _, r := range shoppingListRecipes {
-		response.Recipes = append(response.Recipes, recipe{
+		response.Recipes = append(response.Recipes, viewmodel.Recipe{
 			ID: r.ID,
 			Title: r.Title,
 			Author: r.Author,
