@@ -54,7 +54,7 @@ For localhost: ```postgres://postgres:postgres@localhost:5432/recipe_repo?sslmod
 For docker: ```postgres://postgres:postgres@db:5432/recipe_repo?sslmode=disable```
 
 - DB= your database url string
-- PLATFORM= if this is set to "dev", this enables the /api/reset endpoint which will clear your database.
+- PLATFORM= no longer used but may return
 - SECRET= this is what the auth package will use to validate tokens. keep it secret. keep it safe.
 - JWT_DUR= this sets the expiry on authorization tokens. it is in seconds (```3600``` = 1 hour)
 - APP_DIR= root path for the frontend. probably doesn't need changed but I won't tell you no
@@ -66,11 +66,15 @@ For docker: ```postgres://postgres:postgres@db:5432/recipe_repo?sslmode=disable`
 
 **Security note:** This backend server uses JWT authorization for certain endpoints and this demo uses a generic secret in the SECRET env variable. If you plan to use this publicly you should change that.
 
+<br>
+
 #### Docker
 
 - If your env is set up correctly, all you need to do now is ```docker compose up``` and the containers will spin up and bind to localhost:8080
 
 - If the db url is not set correctly, the container will start with no database connection.
+
+<br>
 
 #### Manual Setup
 
@@ -92,227 +96,20 @@ For docker: ```postgres://postgres:postgres@db:5432/recipe_repo?sslmode=disable`
 
 - Start the server ```./reciperepo```. It will seed the database with ingredients from the setup.json file.
 
----
+<br>
 
 If your server is running and everything works correctly, go to ```http://localhost:8080/``` to view the demo web application.
 
+<br><br>
+
+
 ## API DOCUMENTATION
 
-**A note on response shapes:** because most of the functionality uses the same basic shape, there are only a couple structs that shape the JSON data and some is omitted case to case based on the endpoint.
+See full API docs on the [wiki](https://github.com/trhys/Recipe-Repo-2/wiki)
 
-#### User endpoints:
+Response bodies take the form of either a JSON body or rendered HTML, depending on the Accept header on certain endpoints.
 
-##### Basic response shape for endpoints that return user data:
-
-```
-  {
-     "id" : a uuid,
-     "created_at" : a timestamp when the user was created.
-     "updated_at" : last updated timestamp of user,
-     "email" : user email address,
-     "name" : user display name,
-  }
-  ```
----
-
-- "GET /api/users/{user_id}" : responds with JSON user information
-
-- "POST /api/new_user" : creates a new user in the database. takes an email, username, and password in this shape:
-
-  REQUEST:
-  ```
-  {
-    "email" : an email address,
-    "name" : user display name,
-    "password": user password,
-  }
-  ```
-
-  The backend will hash the password and store the hash in the users table.
-  
-- "POST /api/login" : send request with email and password and the backend will check against the hash stored in the users table and respond with a JWT and refresh token if validated.
-
-  REQUEST:
-  ```
-  {
-    "email": email address,
-    "password": user's password,
-  }
-  ```
-
-  RESPONSE:
-  ```
-  {
-    "id": user's uuid,
-    "email": user's email address",
-    "username": display name,
-    "token": JWT for authorization(1 hr expiry by default),
-    "refresh_token": token stored in database with 30 day expiry,
-  }
-  ```
-  
-- "POST /api/admin/reset" : takes no request body, just requires the PLATFORM env variable to be set to "dev". Empties the users table which will cascade onto mostly everything else. Use this to reset the database if desired.
----
-
-#### Recipe Endpoints
-
-##### Basic recipe response shape: 
-```
-{
-  "id": uuid,
-  "title": title of recipe,
-  "created_at": timestamp of creation,
-  "updated_at": timestamp of last update,
-  "user_id": uuid of creator,
-  "author": display name of creator,
-  "description": the description,
-  "image_key": key is used to search s3 for image asset,
-  "ingredients": array of ingredient objects,
-  "image_url": constructed url for image,
-}
-```
-
-Some responses give ingredients in this shape:
-```
-{
-  "id": ingredient uuid,
-  "name": display name,
-  "quantity": float32 quantity value,
-  "unit": string unit measurment,
-}
-```
----
-
-- "GET /users/{user_id}" : takes header Accept - if set to application/json, responds with json in this shape:
-  ```
-  {
-    "recipes": array of recipes,
-    "name": display name for {user_id},
-  }
-  ```
-  If Accept != application/json, this endpoint renders an HTML template.
-  
-- "GET /recipes/{recipe_id}" : takes header Accept - if set to application/json, responds with json in the basic recipe shape. If Accept != application/json, this endpoint renders an HTML template.
-  
-- "GET /api/recipes" : responds with ten most recently created recipes from the database. The json shape is:
-  ```
-  {
-    "recipes": array of recipes in the basic shape,
-  }
-  ```
-
-- "POST /api/new_recipe" : requires Authorization header (Authorization: Bearer $jwt_token). Takes a request body and creates the recipe in the database. Returns the recipe in the base json shape above.
-  REQUEST:
-  ```
-  {
-    "title": recipe title,
-    "user_id": creator's id,
-    "description": description provided by user,
-    "ingredients": array of ingredients,
-  }
-  ```
----
-
-#### Ingredient Endpoints
-
-##### Basic ingredient response shape: 
-```
-{
-   "id': uuid,
-   "name": display name,
-   "image_key": key to aws asset,
-   "created_at": timestamp of creation,
-   "updated_at": timestamp of last update,
-}
-```
----
-
-- "POST /api/admin/new_ingredient" - create new ingredient. currently an admin only feature but will change. 'admin' is a column in the users table that is checked here
-  REQUEST:
-  ```
-  {
-     "name": display name for the ingredient,
-  }
-  ```
-  This ep will take more in the future as other API integrations occur.
-
-- "GET /api/get_ingredients" - responds with all the ingredients available in the database. Will probably make some changes as this is likely not scalable.
-  RESPONSE:
-  ```
-  {
-     "ingredients": array of basic ingredient responses,
-  }
-  ```
----
-
-#### Shopping list Endpoints
-
-##### Basic shopping list response shape: 
-```
-{
-   "id": uuid,
-   "name": display name,
-   "created_at": timestamp of creation,
-   "updated_at": timestamp of last update,
-}
-```
----
-
-- "GET /shoppinglists/{shopping_list_id} - takes "Accept" header: if application/json:
-  RESPONSE:
-  ```
-  {
-     "id": uuid,
-	  "name": display name,
-     "created_at": timestamp of creation,
-     "recipes": array of recipe responses,
-     "quantity": map of recipes to quantity selected,
-  }
-  ```
-  Otherwise renders HTML template.
-  
-- "GET /users/{user_id}/shoppinglists" - gets shopping lists for user. takes header: Authorization Bearer $token, && "Accept"
-  if Accept: application/json:
-  ```
-  {
-     "name": user's display name,
-     "shopping_lists": array of shopping list responses,
-  }
-  ```
-  Otherwise render HTML
-  
-- "POST /api/new_shopping_list" - create new shopping list. takes Authorization Bearer token header
-  REQUEST:
-  ```
-  {
-     "name": shopping list name,
-  }
-  ```
-  Responds with created list
-  
-- "POST /api/add_to_list" - add recipe to list
-  REQUEST:
-  ```
-  {
-     "shopping_list_id": uuid of shopping list,
-     "recipe_id": uuid of recipe,
-     "quantity": number to add,
-  }
-  ```
-  No response body given
----
-
-#### Token Endpoints
-
-- "POST /api/tokens/refresh" - takes Authorization Bearer token header, where token is a refresh token. Checks token in db and returns new JWT if valid
-  RESPONSE:
-  ```
-  {
-     "token": JWT,
-  }
-  ```
-  
-- "POST /api/tokens/revoke" - takes Authorization Bearer token, where token is a refresh token. Returns no body, just revokes existing token and respond with status 204
+The [/internal/viewmodel/](https://github.com/trhys/Recipe-Repo-2/tree/rest-and-dry-refactor/internal/viewmodel) package defines the shape of each response.
 
 ## Contributing
 
