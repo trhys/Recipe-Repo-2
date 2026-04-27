@@ -64,13 +64,6 @@ type ShoppingList struct {
 	UserID    uuid.UUID
 }
 
-type ShoppingListIngredient struct {
-	ShoppingListID uuid.UUID
-	IngredientID   uuid.UUID
-	Quantity       float32
-	Units          string
-}
-
 type ShoppingListRecipe struct {
 	ShoppingListID uuid.UUID
 	RecipeID       uuid.UUID

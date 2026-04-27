@@ -1,107 +1,77 @@
 package main
 
 import (
-	"encoding/json"
+	"fmt"
 	"html/template"
 	"path/filepath"
 	"net/http"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/trhys/Recipe-Repo-2/internal/auth"
 	"github.com/trhys/Recipe-Repo-2/internal/database"
 	"github.com/trhys/Recipe-Repo-2/internal/viewmodel"
+	util "github.com/trhys/Recipe-Repo-2/internal/utility"
 )
 
-type shoppingList struct{
-	ID		uuid.UUID 	`json:"id"`
-	Name		string		`json:"name"`
-	CreatedAt	time.Time	`json:"created_at"`
-	UpdatedAt	time.Time	`json:"updated_at"`
-} 
-
+// Create a new, empty shopping list
 func (cfg *apiConfig) handlerCreateShoppingList(w http.ResponseWriter, r *http.Request) {
 	var req struct{
 		Name	string `json:"name"`
 	}
 
 	// AUTH
-	token, err := auth.GetBearerToken(r.Header)
-	if err != nil {
-		respondFail(w, 400, "Invalid header", err)
-		return
-	}
-
-	subject, err := auth.ValidateJWT(token, cfg.secret)
-	if err != nil {
-		respondFail(w, 401, "Invalid token", err)
-		return
-	}
+	requesterID, ok := r.Context().Value("userID").(uuid.UUID)
+        if !ok {
+                respondFail(w, 401, "Unauthorized", fmt.Errorf("Unauthorized access attempt at user id: %s", requesterID))
+                return
+        }
 
 	// Decode request body
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&req); err != nil {
-		respondFail(w, 400, "Failed to decode request body", err)
+	if err := util.DecodeRequest(w, r, 1<<20, &req); err != nil {
+		respondFail(w, 500, "Something went wrong", fmt.Errorf("Failed to decode request: ERROR: %v", err))
 		return
 	}
 
 	// Create list
 	list, err := cfg.db.CreateShoppingList(r.Context(), database.CreateShoppingListParams{
 		Name: req.Name,
-		UserID: subject,
+		UserID: requesterID,
 	})
 
-	respondJSON(w, 200, list)
+	if err != nil {
+		respondFail(w, 500, "Create list query failed", err)
+		return
+	}
+
+	respondJSON(w, 200, viewmodel.ShoppingList{
+		ID: list.ID,
+		Name: list.Name,
+		CreatedAt: list.CreatedAt,
+		UpdatedAt: list.UpdatedAt,
+	})
 }
 
+// Add recipe to shopping list
 func (cfg *apiConfig) handlerAddToShoppingList(w http.ResponseWriter, r *http.Request) {
 	var req struct{
 		ShoppingListID	uuid.UUID `json:"shopping_list_id"`
 		RecipeID	uuid.UUID `json:"recipe_id"`
 		Quantity	int32	  `json:"quantity"`
-		Units		string	  `json:"units"`
 	}
 
 	// AUTH
-        token, err := auth.GetBearerToken(r.Header)
-        if err != nil {
-                respondFail(w, 400, "Invalid header", err)
-                return
-        }
-
-        if _, err := auth.ValidateJWT(token, cfg.secret); err != nil {
-                respondFail(w, 401, "Invalid token", err)
+        requesterID, ok := r.Context().Value("userID").(uuid.UUID)
+        if !ok {
+                respondFail(w, 401, "Unauthorized", fmt.Errorf("Unauthorized access attempt at user id: %s", requesterID))
                 return
         }
 
 	// Decode body
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&req); err != nil {
-		respondFail(w, 400, "Failed to decode request body", err)
+	if err := util.DecodeRequest(w, r, 1<<20, &req); err != nil {
+		respondFail(w, 500, "Something went wrong", fmt.Errorf("Failed to decode request: ERROR: %v", err))
 		return
 	}
 
-	// Get ingredients from recipe id
-	ingredientList, err := cfg.db.GetIngredientList(r.Context(), req.RecipeID)
-	if err != nil {
-		respondFail(w, 404, "Couldn't find recipe", err)
-		return
-	}
-
-	for _, ingredient := range ingredientList {
-		err := cfg.db.AddToShoppingList(r.Context(), database.AddToShoppingListParams{
-			ShoppingListID: req.ShoppingListID,
-			IngredientID: ingredient.IngredientID,
-			Quantity: ingredient.Quantity,
-			Units: ingredient.Unit,
-		})
-		if err != nil {
-			respondFail(w, 500, "Something went wrong", err)
-			return
-		}
-	}
-
-	// Link recipe to list
+	// Link recipe to list by ID
 	if err := cfg.db.AddRecipeToList(r.Context(), database.AddRecipeToListParams{
 		ShoppingListID: req.ShoppingListID,
 		RecipeID: req.RecipeID,
@@ -114,7 +84,7 @@ func (cfg *apiConfig) handlerAddToShoppingList(w http.ResponseWriter, r *http.Re
 	respondJSON(w, 204, nil)
 }
 
-
+// Get shopping list by ID
 func (cfg *apiConfig) handlerGetShoppingList(w http.ResponseWriter, r *http.Request) {
 	val := r.PathValue("shopping_list_id")
 	listID, err := uuid.Parse(val) 
@@ -123,46 +93,35 @@ func (cfg *apiConfig) handlerGetShoppingList(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// AUTH
+        requesterID, ok := r.Context().Value("userID").(uuid.UUID)
+        if !ok {
+                respondFail(w, 401, "Unauthorized", fmt.Errorf("Unauthorized access attempt at user id: %s", requesterID))
+                return
+        }
+
 	shoppingList, err := cfg.db.GetShoppingList(r.Context(), listID)
 	if err != nil {
 		respondFail(w, 404, "Couldn't find shopping list", err)
 		return
 	}
 
-	type res struct{
-		ID	 uuid.UUID		`json:"id"`
-		Name	 string 		`json:"name"`
-		Created  time.Time		`json:"created_at"`
-		Recipes  []viewmodel.Recipe	`json:"recipes"`
-		Quantity map[uuid.UUID]int32	`json:"quantity"`
-	}
+	if requesterID != shoppingList.UserID {
+		respondFail(w, 401, "Unauthorized", fmt.Errorf("Unauthorized access attempt at user id: %s", requesterID))
+                return
+        }
 
+	// Get recipes from list
 	shoppingListRecipes, err := cfg.db.GetRecipesFromList(r.Context(), shoppingList.ID)
 	if err != nil {
 		respondFail(w, 404, "couldnt find recipes from list", err)
 		return
 	}
 
-	response := res{
-		ID: shoppingList.ID,
-		Name: shoppingList.Name,
-		Created: shoppingList.CreatedAt,
-		Quantity: make(map[uuid.UUID]int32),
-	}
-
-	for _, r := range shoppingListRecipes {
-		response.Recipes = append(response.Recipes, viewmodel.Recipe{
-			ID: r.ID,
-			Title: r.Title,
-			Author: r.Author,
-			UserID: &r.UserID,
-		})
-
-		response.Quantity[r.ID] = r.Quantity
-	}
+	model := viewmodel.GenerateShoppingListViewModel(shoppingList, shoppingListRecipes)	
 
 	if r.Header.Get("Accept") == "application/json" {
-		respondJSON(w, 200, response)
+		respondJSON(w, 200, model)
 		return
 	}
 
@@ -172,9 +131,10 @@ func (cfg *apiConfig) handlerGetShoppingList(w http.ResponseWriter, r *http.Requ
                 return
         }
 
-        tmpl.Execute(w, response)
+        tmpl.Execute(w, model)
 }
 
+// List the user's shopping lists
 func (cfg *apiConfig) handlerGetUsersShoppingLists(w http.ResponseWriter, r *http.Request) {
 	val := r.PathValue("user_id")
 	id, err := uuid.Parse(val)
@@ -190,49 +150,23 @@ func (cfg *apiConfig) handlerGetUsersShoppingLists(w http.ResponseWriter, r *htt
         }
 
 	// Authorization
-        token, err := auth.GetBearerToken(r.Header)
-        if err != nil {
-                respondFail(w, 401, "Failed to retrieve bearer token", err)
+        _, ok := r.Context().Value("userID").(uuid.UUID)
+        if !ok {
+                respondFail(w, 401, "Unauthorized", fmt.Errorf("Unauthorized access attempt at user id: %s", val))
                 return
         }
 
-        subject, err := auth.ValidateJWT(token, cfg.secret)
-        if err != nil {
-                respondFail(w, 401, "Couldn't validate token", err)
-                return
-        }
-
-        if subject != user.ID {
-                respondFail(w, 401, "Unauthorized access", nil)
-                return
-        }
-
-	// Authorized - Get lists
-
+	// Get lists
 	lists, err := cfg.db.GetUserLists(r.Context(), user.ID)
 	if err != nil {
 		respondFail(w, 404, "Couldn't retrieve user's shopping lists", err)
 		return
 	}
 
-	var res struct{
-		Name	string `json:"name"`
-		Lists	[]shoppingList `json:"shopping_lists"`
-	}
-
-	res.Name = user.Name
-
-	for _, list := range lists {
-		res.Lists = append(res.Lists, shoppingList{
-			ID: list.ID,
-			Name: list.Name,
-			CreatedAt: list.CreatedAt,
-			UpdatedAt: list.UpdatedAt,
-		})
-	}
+	model := viewmodel.GenerateUserListsViewModel(user.Name, lists)
 
 	if r.Header.Get("Accept") == "application/json" {
-                respondJSON(w, 200, res)
+                respondJSON(w, 200, model)
                 return
         }
 
@@ -242,20 +176,15 @@ func (cfg *apiConfig) handlerGetUsersShoppingLists(w http.ResponseWriter, r *htt
                 return
         }
 
-        tmpl.Execute(w, res)
+        tmpl.Execute(w, model)
 }
 
+// Print the shopping lists ingredients in converted retail units
 func (cfg *apiConfig) handlerPrintList(w http.ResponseWriter, r *http.Request) {
 	// AUTH
-        token, err := auth.GetBearerToken(r.Header)
-        if err != nil {
-                respondFail(w, 400, "Invalid header", err)
-                return
-        }
-
-        subject, err := auth.ValidateJWT(token, cfg.secret)
-	if err != nil {
-                respondFail(w, 401, "Invalid token", err)
+        requesterID, ok := r.Context().Value("userID").(uuid.UUID)
+        if !ok {
+                respondFail(w, 401, "Unauthorized", fmt.Errorf("Unauthorized access attempt at user id: %s", requesterID))
                 return
         }
 
@@ -264,9 +193,8 @@ func (cfg *apiConfig) handlerPrintList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Decode body
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&req); err != nil {
-		respondFail(w, 400, "Failed to decode request body", err)
+	if err := util.DecodeRequest(w, r, 1<<20, &req); err != nil {
+		respondFail(w, 500, "Something went wrong", fmt.Errorf("Failed to decode request: ERROR: %v", err))
 		return
 	}
 
@@ -277,7 +205,7 @@ func (cfg *apiConfig) handlerPrintList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if list.UserID != subject {
+	if list.UserID != requesterID {
 		respondFail(w, 401, "Unauthorized access", err)
 		return
 	}
@@ -289,16 +217,10 @@ func (cfg *apiConfig) handlerPrintList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var res struct{
-		Name string `json:"name"`
-		Items []database.PrintListRow `json:"items"`
-	}
-
-	res.Name = list.Name
-	res.Items = printed
+	model := viewmodel.GeneratePrintViewModel(list.Name, printed)
 
 	if r.Header.Get("Accept") == "application/json" {
-		respondJSON(w, 200, res)
+		respondJSON(w, 200, model)
 		return
 	}
 
@@ -308,7 +230,5 @@ func (cfg *apiConfig) handlerPrintList(w http.ResponseWriter, r *http.Request) {
                 return
         }
 
-        tmpl.Execute(w, res)
+        tmpl.Execute(w, model)
 }
-
-

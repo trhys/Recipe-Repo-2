@@ -154,11 +154,11 @@ func main() {
 	mux.HandleFunc("GET /api/ingredients", cfg.handlerGetIngredientBase)
 
 	// Shopping list eps
-	mux.HandleFunc("GET /shoppinglists/{shopping_list_id}", cfg.handlerGetShoppingList)
-	mux.HandleFunc("GET /users/{user_id}/shoppinglists", cfg.handlerGetUsersShoppingLists)
-	mux.HandleFunc("POST /api/shoppinglists", cfg.handlerCreateShoppingList)
-	mux.HandleFunc("POST /api/shoppinglists/{shopping_list_id}", cfg.handlerAddToShoppingList)
-	mux.HandleFunc("GET /print/shoppinglists/{shopping_list_id}", cfg.handlerPrintList)
+	mux.HandleFunc("GET /shoppinglists/{shopping_list_id}", cfg.authMiddleware(cfg.handlerGetShoppingList))
+	mux.HandleFunc("GET /users/{user_id}/shoppinglists", cfg.authMiddleware(cfg.handlerGetUsersShoppingLists))
+	mux.HandleFunc("POST /api/shoppinglists", cfg.authMiddleware(cfg.handlerCreateShoppingList))
+	mux.HandleFunc("POST /api/shoppinglists/{shopping_list_id}", cfg.authMiddleware(cfg.handlerAddToShoppingList))
+	mux.HandleFunc("GET /print/shoppinglists/{shopping_list_id}", cfg.authMiddleware(cfg.handlerPrintList))
 
 	// Token eps
 	mux.HandleFunc("POST /api/tokens/refresh", cfg.handlerRefreshToken)
