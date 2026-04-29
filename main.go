@@ -12,7 +12,7 @@ import (
 	_ "github.com/lib/pq"
         "github.com/joho/godotenv"
 	"github.com/trhys/Recipe-Repo-2/internal/database"
-	"github.com/trhys/Recipe-Repo-2/internal/migrations"
+	"github.com/trhys/Recipe-Repo-2/internal/data"
 	"github.com/trhys/Recipe-Repo-2/internal/viewmodel"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -113,18 +113,10 @@ func main() {
 	}
 
 	// Check database seeding
-	log.Println("Checking database seeding...")
-	var count int
-	db.QueryRow("SELECT COUNT(*) FROM ingredients").Scan(&count)
-	if count < 99 {
-		log.Println("Unseeded!")
-		if err := migrations.SeedDB("setup.json", imagePlaceholder, db, context.Background()); err != nil {
-			log.Panic("Failed to seed database")
-		}
-	} else {
-		log.Println("Database already seeded, continue...")
+	if err := data.InitDB(imagePlaceholder, db, context.Background()); err != nil {
+		log.Panic("Failed to seed database")
 	}
-	
+		
 	// Load server
 
 	mux := http.NewServeMux()
@@ -152,13 +144,14 @@ func main() {
 	// Ingredient eps
 	mux.HandleFunc("POST /api/ingredients", cfg.handlerCreateIngredient)
 	mux.HandleFunc("GET /api/ingredients", cfg.handlerGetIngredientBase)
+	mux.HandleFunc("POST /api/units", cfg.handlerGetUnits)
 
 	// Shopping list eps
 	mux.HandleFunc("GET /shoppinglists/{shopping_list_id}", cfg.authMiddleware(cfg.handlerGetShoppingList))
 	mux.HandleFunc("GET /users/{user_id}/shoppinglists", cfg.authMiddleware(cfg.handlerGetUsersShoppingLists))
 	mux.HandleFunc("POST /api/shoppinglists", cfg.authMiddleware(cfg.handlerCreateShoppingList))
 	mux.HandleFunc("POST /api/shoppinglists/{shopping_list_id}", cfg.authMiddleware(cfg.handlerAddToShoppingList))
-	mux.HandleFunc("GET /print/shoppinglists/{shopping_list_id}", cfg.authMiddleware(cfg.handlerPrintList))
+	mux.HandleFunc("GET /shoppinglists/{shopping_list_id}/print", cfg.authMiddleware(cfg.handlerPrintList))
 
 	// Token eps
 	mux.HandleFunc("POST /api/tokens/refresh", cfg.handlerRefreshToken)

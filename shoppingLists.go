@@ -188,18 +188,16 @@ func (cfg *apiConfig) handlerPrintList(w http.ResponseWriter, r *http.Request) {
                 return
         }
 
-	var req struct{
-		ID uuid.UUID `json:"id"`
-	}
-
-	// Decode body
-	if err := util.DecodeRequest(w, r, 1<<20, &req); err != nil {
-		respondFail(w, 500, "Something went wrong", fmt.Errorf("Failed to decode request: ERROR: %v", err))
-		return
-	}
+	// Get list ID
+	val := r.PathValue("shopping_list_id")
+	id, err := uuid.Parse(val)
+        if err != nil {
+                respondFail(w, 404, "Invalid uuid", err)
+                return
+        }
 
 	// Verify ownership against JWT subject
-	list, err := cfg.db.GetListOwner(r.Context(), req.ID)
+	list, err := cfg.db.GetListOwner(r.Context(), id)
 	if err != nil {
 		respondFail(w, 401, "Couldn't validate ownership", err)
 		return
@@ -211,7 +209,7 @@ func (cfg *apiConfig) handlerPrintList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get list
-	printed, err := cfg.db.PrintList(r.Context(), req.ID)
+	printed, err := cfg.db.PrintList(r.Context(), id)
 	if err != nil {
 		respondFail(w, 404, "Couldn't locate list", err)
 		return

@@ -14,3 +14,7 @@ SELECT id, name FROM ingredients;
 -- name: GetIngredientName :one
 SELECT name FROM ingredients
 WHERE id = $1;
+
+-- name: GetIngredientFromName :one
+SELECT id FROM ingredients
+WHERE name = $1;

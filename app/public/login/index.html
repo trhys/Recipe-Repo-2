@@ -6,14 +6,18 @@
 <link rel="stylesheet" href="../style.css">
 </head>
 <body>
-  <div class="navbar">
-          <div class="heading">
-          <h1>The Recipe Repository</h1>
-          </div>
+  <div id="navbar"></div>
+  <script type="module">
+          import { loadNav } from '../js/components.js';
+          loadNav();
+  </script>
 
-          <a href="/">Home</a>
-	  <a href="/signup">Sign Up</a>
+  <div id="error-box" 
+     class="error" 
+     style="display: none;" 
+     role="alert">
   </div>
+
   <div id="auth-section">
       <h2>Login</h2>
       <form id="login-form">
@@ -36,5 +40,24 @@
         </div>
       </form>
     </div>
+
+<script type="module">
+	import { auth } from '../js/auth.js'
+
+	const form = document.getElementById('login-form');
+
+	form.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		try {
+			await auth.getSession();
+			window.location.href = '/';
+		} catch (error) {
+			const err = document.getElementById('error-box');
+			err.textContent = error.message;
+			err.style.display = 'block';
+		}
+	});
+</script>
+
 </body>
 </html>

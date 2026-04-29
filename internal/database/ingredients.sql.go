@@ -40,6 +40,18 @@ func (q *Queries) CreateIngredient(ctx context.Context, arg CreateIngredientPara
 	return i, err
 }
 
+const getIngredientFromName = `-- name: GetIngredientFromName :one
+SELECT id FROM ingredients
+WHERE name = $1
+`
+
+func (q *Queries) GetIngredientFromName(ctx context.Context, name string) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, getIngredientFromName, name)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getIngredientName = `-- name: GetIngredientName :one
 SELECT name FROM ingredients
 WHERE id = $1

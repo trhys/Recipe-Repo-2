@@ -8,7 +8,7 @@ import (
         "github.com/trhys/Recipe-Repo-2/internal/database"
 )
 
-type Recipe struct{
+type Recipe struct {
     ID          uuid.UUID            `json:"id"`
     Title       string               `json:"title"`
     CreatedAt   time.Time            `json:"created_at"`
@@ -20,26 +20,28 @@ type Recipe struct{
     Ingredients	[]Ingredient	     `json:'ingredients,omitempty"`
 }
 
-type Ingredient struct {
-        ID              uuid.UUID 	`json:"id"`
-        Name            string 		`json:"name"`
-        Quantity        float32 	`json:"quantity,omitempty"`
-        Unit            string 		`json:"unit,omitempty"`
+type RecipeCardViewModel struct {
+	Recipes	[]Recipe	`json:"recipes"`
 }
 
-func (builder *VMFactory) GenerateRecipeCardViewModel(r database.Recipe) Recipe {
-	return Recipe{
-		ID:		r.ID,
-		Title:		r.Title,
-		CreatedAt:	r.CreatedAt,
-		UserID:		&r.UserID,
-		Author:		r.Author,
-		ImageURL:	fmt.Sprintf("%s/%s", builder.S3cdn, r.ImageKey),
+func (builder *VMFactory) GenerateRecipeCardViewModel(recipes []database.Recipe) RecipeCardViewModel {
+	model := RecipeCardViewModel{}
+	for _, r := range recipes {
+		model.Recipes = append(model.Recipes, Recipe {
+			ID:		r.ID,
+			Title:		r.Title,
+			CreatedAt:	r.CreatedAt,
+			UserID:		&r.UserID,
+			Author:		r.Author,
+			ImageURL:	fmt.Sprintf("%s/%s", builder.S3cdn, r.ImageKey),
+		})
 	}
+
+	return model
 }
 
 func (builder *VMFactory) GenerateRecipeFullViewModel(r database.Recipe, i []Ingredient) Recipe {
-	return Recipe{
+	return Recipe {
 		ID:		r.ID,
 		Title:		r.Title,
 		CreatedAt:	r.CreatedAt,

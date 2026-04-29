@@ -209,10 +209,5 @@ func (cfg *apiConfig) handlerGetRecipeList(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	list := []viewmodel.Recipe{}
-	for _, rec := range recipes {
-		list = append(list, cfg.vmf.GenerateRecipeCardViewModel(rec))
-	}
-
-	respondJSON(w, 200, list)
+	respondJSON(w, 200, cfg.vmf.GenerateRecipeCardViewModel(recipes))
 }

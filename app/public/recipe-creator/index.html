@@ -7,23 +7,11 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
 </head>
 <body>
-  <div class="navbar">
-          <div class="heading">
-          <h1>The Recipe Repository</h1>
-          </div>
-
-          <a href="/">Home</a>
-          
-          <div class="nav-dropdown">
-                  <button class="dropbtn">Create
-                          <i class="fa fa-caret-down"></i>
-                  </button>
-                  <div class="dropbtn-content">
-                          <a href="/shopping-list-creator">New Shopping List</a>
-                  </div>
-          </div>
-	  <button class="requires-login" id="shopping-lists-btn">Shopping Lists</button>
-          <button class="navbtn" id="logout-button" onclick="logout()">Logout</button>  </div>
+     <div id="navbar"></div>
+	  <script type="module">
+		  import { loadNav } from '/js/components.js';
+		  loadNav();
+	  </script>
 
 <form id="recipe-creator">
       <h4>
@@ -41,15 +29,12 @@
 	<div id="ingredients-wrapper">
         <div class="ingredient-row" style="margin-top: 10px;">
 		  <input list="ingredient-list" type="text" class="db-search-input" placeholder="Search from database...">
-		  <input type="hidden" class="ingredient_uuid" name="ingredient_id">
+		  <input type="hidden" id="ingredient_uuid" class="ingredient_uuid" name="ingredient_id">
 		  
           <input class="input-area" type="number" step="any" name="quantity" placeholder="qty (1)" required />
           <label for="unit">Unit:</label>
-                <select name="unit">
-                  <option value="cup">Cups</option>
-                  <option value="tablespoon">Tablespoons</option>
-                  <option value="teaspoon">Teaspoons</option>
-                  <option value="gram">Grams</option>
+                <select name="unit" class="ingredient-units">
+                  <option>...</option>
                 </select>
           <button type="button" class="remove-btn">×</button>
         </div>
@@ -64,38 +49,17 @@
 <button type="submit">Submit</button>
     </form>
 
-    <script>
-async function fetchDbOptions() {
-  try {
-    const response = await fetch('/api/get_ingredients');
-    const items = await response.json();
-    populateList(items.ingredients);
-  } catch (err) {
-    console.error("Failed to load database options:", err);
-  }
-}
-
-function populateList(items) {
-  const list = document.getElementById('ingredient-list');
-  list.innerHTML = items.map(item => `
-	  <option value="${item.name}" data-id="${item.id}"></option>
-  `).join('');
-}
-
-function filterOptions() {
-  const input = document.getElementById('dbSearch').value.toLowerCase();
-  const listItems = document.querySelectorAll('#ingredient-list option');
-
-  listItems.forEach(option => {
-    const text = option.textContent.toLowerCase();
-    option.style.display = text.includes(input) ? "block" : "none";
-  });
-}
-
-function selectItem(name, id) {
-  document.getElementById('ingredient_uuid').value = id;
-}
-fetchDbOptions();
-
-    </script>
+<script type="module" src="/js/recipeCreator.js"></script>
+<script type="module">
+	import { fetchDbOptions } from "/js/recipeCreator.js";
+	await fetchDbOptions();
+</script>
+<script type="module">
+	import { postRecipe } from "/js/api.js";
+	const form = document.getElementById('recipe-creator');
+	form.addEventListener('submit', async (event) => {
+        	event.preventDefault();
+		await postRecipe(form);
+	});
+</script>
 </body>

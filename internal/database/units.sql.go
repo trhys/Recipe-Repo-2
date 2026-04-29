@@ -37,3 +37,36 @@ func (q *Queries) CreateConversion(ctx context.Context, arg CreateConversionPara
 	)
 	return err
 }
+
+const getConversionsByID = `-- name: GetConversionsByID :many
+SELECT ingredient_id, from_unit, to_unit, ratio FROM conversions
+WHERE ingredient_id = $1
+`
+
+func (q *Queries) GetConversionsByID(ctx context.Context, ingredientID uuid.UUID) ([]Conversion, error) {
+	rows, err := q.db.QueryContext(ctx, getConversionsByID, ingredientID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Conversion
+	for rows.Next() {
+		var i Conversion
+		if err := rows.Scan(
+			&i.IngredientID,
+			&i.FromUnit,
+			&i.ToUnit,
+			&i.Ratio,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

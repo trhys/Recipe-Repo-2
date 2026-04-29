@@ -11,8 +11,10 @@ import (
 
 	"github.com/google/uuid"
         "github.com/aws/aws-sdk-go-v2/service/s3"
+	util "github.com/trhys/Recipe-Repo-2/internal/utility"
         "github.com/trhys/Recipe-Repo-2/internal/database"
         "github.com/trhys/Recipe-Repo-2/internal/auth"
+	"github.com/trhys/Recipe-Repo-2/internal/viewmodel"
 )
 
 
@@ -136,6 +138,8 @@ func (cfg *apiConfig) handlerCreateIngredient(w http.ResponseWriter, r *http.Req
 	respondJSON(w, 200, res)
 }
 
+
+// Grabs the full collection of ingredients 
 func (cfg *apiConfig) handlerGetIngredientBase(w http.ResponseWriter, r *http.Request) {
 	ingredients, err := cfg.db.GetIngredients(r.Context())
 	if err != nil {
@@ -156,4 +160,24 @@ func (cfg *apiConfig) handlerGetIngredientBase(w http.ResponseWriter, r *http.Re
 	}
 
 	respondJSON(w, 200, res)
+}
+
+// Gets collection of units for ingredient by id
+func (cfg *apiConfig) handlerGetUnits(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		IngredientID	uuid.UUID	`json:"ingredient_id"`
+	}
+
+	if err := util.DecodeRequest(w, r, 1<<20, &req); err != nil {
+		respondFail(w, 400, "Couldn't decode request body", err)
+		return
+	}
+
+	conversions, err := cfg.db.GetConversionsByID(r.Context(), req.IngredientID)
+	if err != nil {
+		respondFail(w, 404, "Couldn't get units", err)
+		return
+	}
+
+	respondJSON(w, 200, viewmodel.GenerateUnitsViewModel(conversions))
 }
