@@ -13,7 +13,7 @@
           loadNav();
   </script>
 
-  <div id="recipe-viewer">    
+  <div id="recipe-viewer" data-id="{{ .ID }}">    
     <h2>
       {{ .Title }}
       <hr></h2>
@@ -42,6 +42,18 @@
       </ul>
     </div>
     <pre>{{ .Description }}</pre> 
+    <button id="addtolist">Add to Shopping List</button>
   </div>
+  <dialog id="modal"></dialog>
+<script type="module">
+	import { addToListModal } from '/js/components.js';
+
+	const recipeID = document.querySelector('#recipe-viewer').dataset.id;
+	const btn = document.getElementById('addtolist');
+	btn.addEventListener('click', async (e) => {
+		e.preventDefault();
+		await addToListModal(recipeID);
+	});
+</script>
 </body>
 </html>

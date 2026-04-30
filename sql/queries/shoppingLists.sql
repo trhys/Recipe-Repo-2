@@ -24,7 +24,7 @@ WHERE id = $1;
 SELECT ingredients.name, recipe_ingredients.ingredient_id, recipe_ingredients.quantity, recipe_ingredients.unit, conversions.to_unit, conversions.ratio FROM recipe_ingredients
 INNER JOIN conversions ON conversions.ingredient_id = recipe_ingredients.ingredient_id AND conversions.from_unit = recipe_ingredients.unit
 INNER JOIN ingredients ON ingredients.id = recipe_ingredients.ingredient_id
-WHERE (
+WHERE recipe_ingredients.recipe_id IN (
 	SELECT recipe_id FROM shopping_list_recipes
 	WHERE shopping_list_id = $1
 );

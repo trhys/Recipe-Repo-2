@@ -32,11 +32,11 @@ async function authorizedFetch(url, options = {}) {
 async function refreshToken() {
 	try {
 		let response = await fetch('/api/tokens/refresh', {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('refresh_token')}`,
-            },
-        });
+		    method: 'POST',
+		    headers: {
+			Authorization: `Bearer ${localStorage.getItem('refresh_token')}`,
+		    },
+		});
 		if (!response.ok) return false
 
 		const data = await response.json();
@@ -50,7 +50,7 @@ async function refreshToken() {
 }
 
 // Get user shopping lists
-export async function getShoppingLists() {
+export async function getShoppingListsHTML() {
         const id = localStorage.getItem('user_id');
 
 	try {
@@ -70,6 +70,28 @@ export async function getShoppingLists() {
 		document.close();
 		window.history.pushState({}, '', `users/${id}/shoppinglists`);
 		return
+
+	} catch (error) {
+		alert(`Error: ${error.message}`);
+	}
+}
+
+// Get lists for modal
+export async function getShoppingListsJSON() {
+	const id = localStorage.getItem('user_id');
+
+	try {
+		let response = await authorizedFetch(`/users/${id}/shoppinglists`, {
+			headers: {
+				'Accept': 'application/json'
+			}
+		});
+
+		if (!response.ok) {
+			throw new Error("Failed to fetch shopping lists")
+		}
+
+		return await response.json();
 
 	} catch (error) {
 		alert(`Error: ${error.message}`);
@@ -214,9 +236,10 @@ export async function postRecipe(form) {
 	}
 }
 
+// Create new list
 export async function postShoppingList() {
 	try {
-		const name = document.getElementById('shopping-list-title');
+		const name = document.getElementById('shopping-list-title').value;
 
 		let response = await authorizedFetch('/api/shoppinglists', {
 			method: 'POST',
@@ -233,13 +256,37 @@ export async function postShoppingList() {
 	}
 }
 
-export async function postAddtoList(shoppingListID) {
+// Add recipe to list
+export async function postAddtoList(shoppingListID, recipeID) {
 	try {
-		const name = document.querySelector('.recipeID').className;
 		
-		let respose = await authorizedFetch(`/api/shoppinglists/${shoppingListID}`, {
+		const response = await authorizedFetch(`/api/shoppinglists/${shoppingListID}`, {
 			method: 'POST',
-			body: JSON.stringify({ })
-		})
+			body: JSON.stringify({ shopping_list_id: shoppingListID, recipe_id: recipeID, quantity: 1 })
+		});
+
+		if (response.ok) {
+			alert("Success!");
+		}
+
+	} catch (error) {
+		alert(`Error: ${error.message}`);
+	}
+}
+
+// Fetch shopping list page
+export async function getUserShoppingList(id) {
+	try {
+		const response = await authorizedFetch(`/shoppinglists/${id}`);
+
+		const newHTML = await response.text();
+		document.open();
+		document.write(newHTML);
+		document.close();
+		window.history.pushState({}, '', `/shoppinglists/${id}`);
+		return
+
+	} catch (error) {
+		alert(`Error: ${error.message}`);
 	}
 }

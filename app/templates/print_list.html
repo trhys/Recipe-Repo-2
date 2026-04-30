@@ -22,14 +22,10 @@
     
       <div class="ingredients_in_list">
         <ul id="ingredients">
-                {{ range .Items }}
+                {{ range .Ingredients }}
                 <li>
-			{{ .Name }}
-			{{ .FromUnit }}
-			{{ .ToUnit }}
-			{{ .Ratio }}
-			{{ .Units }}
-			{{ .Quantity }}
+			{{ .Name }}<br/>
+			{{ .Quantity }} - {{ .Unit }}
 		</li>
                 {{ else }}
                 <li>No recipes have been added...</li>

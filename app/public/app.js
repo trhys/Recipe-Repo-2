@@ -1,10 +1,7 @@
 // Page load
-
 document.addEventListener('DOMContentLoaded', async () => {
   const token = localStorage.getItem('token');
   const refresher = localStorage.getItem('refresh_token');
-
-  createNew = document.getElementById('create-new')
 });
 
 // Print shopping list
@@ -14,7 +11,7 @@ async function printList(shoppingListId) {
 	try {
 		const url = `/shoppinglists/${shoppingListId}/print`
 		const body = {
-			method: 'POST',
+			method: 'GET',
 			headers: {
 				'Authorization': `Bearer ${token}`,
 				'Accept': 'text/html'
@@ -28,7 +25,7 @@ async function printList(shoppingListId) {
 			document.open();
 			document.write(newHTML);
 			document.close();
-			window.history.pushState({}, '', `/shoppinglists/${shoppingListId}/printlist`);
+			window.history.pushState({}, '', `/shoppinglists/${shoppingListId}/print`);
 			return
 		}
 

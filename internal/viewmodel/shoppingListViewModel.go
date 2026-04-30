@@ -1,6 +1,7 @@
 package viewmodel
 
 import (
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -80,12 +81,12 @@ func GeneratePrintViewModel(listName string, printout []db.PrintListRow) PrintVi
 	}
 
 	for _, p := range printout {
-		conversion := p.Quantity * p.Ratio
+		conversion := math.Ceil(float64(p.Quantity * p.Ratio))
 		unit := p.ToUnit
 		model.Ingredients = append(model.Ingredients, Ingredient{
 			ID: p.IngredientID,
 			Name: p.Name,
-			Quantity: conversion,
+			Quantity: float32(conversion),
 			Unit: unit,
 		})
 	}
