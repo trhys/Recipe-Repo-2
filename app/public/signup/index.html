@@ -6,14 +6,12 @@
 <link rel="stylesheet" href="../style.css">
 </head>
 <body>
-  <div class="navbar">
-          <div class="heading">
-          <h1>The Recipe Repository</h1>
-          </div>
+  <div id="navbar"></div>
+  <script type="module">
+          import { loadNav } from '/js/components.js';
+          loadNav();
+  </script>
 
-          <a href="/">Home</a>
-	  <a href="/login">Log In</a>
-  </div>
   <h2>
 	  Sign Up
   </h2>
@@ -44,3 +42,16 @@
           <button id="signup-btn" type="submit" style="margin-top: 5px;">SignUp</button>
         </div>
       </form>
+
+<script type="module">
+	import { signup } from '../js/api.js'
+
+	const form = document.getElementById('signup-form');
+
+	form.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		await signup();
+	});
+</script>
+</body>
+</html>

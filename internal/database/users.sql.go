@@ -100,12 +100,13 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (GetUserRow, error)
 }
 
 const getUserHash = `-- name: GetUserHash :one
-SELECT id, name, hashed_pw FROM users
+SELECT id, email, name, hashed_pw FROM users
 WHERE email = $1
 `
 
 type GetUserHashRow struct {
 	ID       uuid.UUID
+	Email    string
 	Name     string
 	HashedPw string
 }
@@ -113,15 +114,22 @@ type GetUserHashRow struct {
 func (q *Queries) GetUserHash(ctx context.Context, email string) (GetUserHashRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserHash, email)
 	var i GetUserHashRow
-	err := row.Scan(&i.ID, &i.Name, &i.HashedPw)
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.Name,
+		&i.HashedPw,
+	)
 	return i, err
 }
 
-const resetUsers = `-- name: ResetUsers :exec
-DELETE FROM users
+const makeAdmin = `-- name: MakeAdmin :exec
+UPDATE users
+SET admin = true
+WHERE id = $1
 `
 
-func (q *Queries) ResetUsers(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, resetUsers)
+func (q *Queries) MakeAdmin(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, makeAdmin, id)
 	return err
 }

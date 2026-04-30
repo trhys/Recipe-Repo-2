@@ -6,3 +6,7 @@ VALUES (
 	$3,
 	$4
 );
+
+-- name: GetConversionsByID :many
+SELECT * FROM conversions
+WHERE ingredient_id = $1;

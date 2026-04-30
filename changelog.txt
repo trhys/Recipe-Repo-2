@@ -1,0 +1,31 @@
+START OF LOG - 4/30/26
+----------------------------
+Commit From: 0775209
+
+# SQL: 
+
+Deleted the shopping_list_ingredients join table and instead we now just use the PrintList query to fetch all the necessary stuff from the database. Did some general clean up in a few areas also.
+
++2 migrations - added foreign key constraint to ingredients referencing units(name); dropped shopping_list_ingredients;
+
+# Internal: 
+
+Added new viewmodel package which pulls response structure out of the http handlers and instead generates them from database objects passed in from the handler.
+
+Added data package which is responsible for database seeding and integrity. On server startup we are checking the database ingredients, units, retail_units, conversions tables so verify they contain all the entries from setup.json
+
+# App:
+
+Major frontend changes concerning the JS structure in general. Not a ton of code changed but we have it better organized instead of the big long app.js file every page had to load. Will continue to polish over time.
+
+# Misc:
+
+Added middleware for auth onto http handlers. Also pulled repetitve decoder stuff into a helper that can grow without causing a cascade of edits. Removed some endpoints that were functionally redundant and modified existing endpoints to be more RESTy.
+
+Working on the README still. 
+
+Dockerfile saw an edit due to moving setup.json into the internal directory, so its not getting copied in the image anymore.
+
+END:
+-----------------------------
+

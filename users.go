@@ -1,40 +1,29 @@
 package main
 
 import (
-	"encoding/json"
 	"path/filepath"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/trhys/Recipe-Repo-2/internal/database"
 	"github.com/trhys/Recipe-Repo-2/internal/auth"
+	util "github.com/trhys/Recipe-Repo-2/internal/utility"
+	"github.com/trhys/Recipe-Repo-2/internal/viewmodel"
 )
 
-// Create user
-type createUserRequest struct {
-	Email		string `json:"email"`
-	Password	string `json:"password"`
-	Name		string `json:"name"`
-}
-
-type userResponse struct {
-	ID		uuid.UUID `json:"id"`
-	CreatedAt	time.Time `json:"created_at"`
-	UpdatedAt	time.Time `json:"updated_at"`
-	Email		string `json:"email"`
-	Name		string `json:"name"`
-}
-
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-	var req createUserRequest
+	// Decode request
+	var req struct {
+		Email		string `json:"email"`
+		Password	string `json:"password"`
+		Name		string `json:"name"`
+	}
 
-	if err := decoder.Decode(&req); err != nil {
-		respondFail(w, 500, "Failed to decode response body", err)
+	if err := util.DecodeRequest(w, r, 1<<20, &req); err != nil {
+		respondFail(w, 500, "Something went wrong", fmt.Errorf("Failed to decode request: ERROR: %v", err))
 		return
 	}
 
@@ -56,48 +45,29 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	res := userResponse{
-		ID: user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.CreatedAt,
-		Email: user.Email,
-		Name: user.Name,
-	}
-
-	log.Printf("User created with email: %s", res.Email)
-	respondJSON(w, 201, res)
-}
-
-
-// User login
-type loginRequest struct {
-	Email		string `json:"email"`
-	Password	string `json:"password"`
-}
-
-type loginResponse struct {
-	ID		uuid.UUID `json:"id"`
-	Email		string `json:"email"`
-	Username	string `json:"username"`
-	JWT		string `json:"token"`
-	RT		string `json:"refresh_token"`
+	log.Printf("User created with email: %s", user.Email)
+	respondJSON(w, 204, nil)
 }
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-	var req loginRequest
+	var req struct {
+		Email		string `json:"email"`
+		Password	string `json:"password"`
+	}
 
-	if err := decoder.Decode(&req); err != nil {
-		respondFail(w, 500, "Failed to decode response body", err)
+	if err := util.DecodeRequest(w, r, 1<<20, &req); err != nil {
+		respondFail(w, 500, "Something went wrong", fmt.Errorf("Failed to decode request: ERROR: %v", err))
 		return
 	}
 
+	// get users info
 	user, err := cfg.db.GetUserHash(r.Context(), req.Email)
 	if err != nil {
 		respondFail(w, 404, "User not found", err)
 		return
 	}
 
+	// check the hash
 	match, err := auth.CheckPasswordHash(req.Password, user.HashedPw)
 	if err != nil {
 		respondFail(w, 500, "Something went wrong during authentication", err)
@@ -111,116 +81,63 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		refresh_token := auth.MakeRefreshToken()
+		refreshToken := auth.MakeRefreshToken()
 		if _, err := cfg.db.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
-			ID: refresh_token,
+			ID: refreshToken,
 			UserID: user.ID,
 		}); err != nil {
 			respondFail(w, 500, "Couldn't generate refresh token", err)
 			return
 		}
 
-		respondJSON(w, 201, loginResponse{
-			ID: user.ID,
-			Email: req.Email,
-			Username: user.Name,
-			JWT: token,
-			RT: refresh_token,
-		})
+		respondJSON(w, 201, viewmodel.GenerateSession(user, token, refreshToken)) 
 		return
 	} else {
-		respondFail(w, 401, "Invalid username or password", fmt.Errorf("Invalid username or password"))
+		respondFail(w, 401, "Invalid username or password", fmt.Errorf("Failed login attempt for: %s", user.Email))
 		return
 	}
-}
-
-// Reset users in dev mode
-func (cfg *apiConfig) handlerReset(w http.ResponseWriter, r *http.Request) {
-	if cfg.platform != "dev" {
-		respondFail(w, 401, "Must be in dev mode to reset users!", nil)
-		return
-	}
-
-	err := cfg.db.ResetUsers(r.Context())
-	if err != nil {
-		respondFail(w, 500, "Something went wrong during users reset", err)
-		return
-	}
-
-	log.Print("Reset database...")
-
-	respondJSON(w, 201, nil)
-}
-
-// Get User by ID without recipe or shopping list info
-func (cfg *apiConfig) handlerGetUser(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("user_id")
-	user_id, err := uuid.Parse(id)
-	if err != nil {
-		respondFail(w, 404, "Invalid user id", err)
-		return
-	}
-
-	user, err := cfg.db.GetUser(r.Context(), user_id)
-	if err != nil {
-		respondFail(w, 404, "Couldn't find user id", err)
-		return
-	}
-
-	res := userResponse{
-		ID: user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email: user.Email,
-		Name: user.Name,
-	}
-
-	respondJSON(w, 200, res)
-}
-
-// Get user profile - public
-type userRecipeList struct{
-        Recipes []recipe `json:"recipes"`
-        Name    string `json:"name"`
 }
 
 func (cfg *apiConfig) handlerGetUserProfile(w http.ResponseWriter, r *http.Request) {
-        val := r.PathValue("user_id")
+	// Get user id from path
+	val := r.PathValue("user_id")
         id, err := uuid.Parse(val)
         if err != nil {
                 respondFail(w, 404, "Invalid uuid", err)
                 return
         }
 
+	// Make sure user exists
         user, err := cfg.db.GetUser(r.Context(), id)
         if err != nil {
                 respondFail(w, 404, "Couldn't find user", err)
                 return
         }
 
+	// Validate auth from middleware
+	requesterID, ok := r.Context().Value("userID").(uuid.UUID)
+	if !ok {
+		respondFail(w, 401, "Unauthorized", fmt.Errorf("Unauthorized access attempt at user id: %s", val))
+		return
+	}
+
+	// Get recipes for user
         recipes, err := cfg.db.GetUsersRecipes(r.Context(), user.ID)
         if err != nil {
                 respondFail(w, 404, "Couldn't find recipes", err)
                 return
         }
 
-        list := userRecipeList{}
-        for _, rec := range recipes {
-                list.Recipes = append(list.Recipes, recipe{
-                        ID: rec.ID,
-                        Title: rec.Title,
-                        CreatedAt: rec.CreatedAt,
-                        UpdatedAt: &rec.UpdatedAt,
-                        UserID: &rec.UserID,
-                        Author: user.Name,
-                        ImageKey: rec.ImageKey,
-                        ImageURL: fmt.Sprintf("%s/%s", cfg.s3cdn, rec.ImageKey),
-                })
-        }
-        list.Name = user.Name
+	// Branch on public/private view based on whether the requester is the user being requested
+	var viewModel any
+	if requesterID == user.ID {
+		viewModel = cfg.vmf.GeneratePrivateUser(user, recipes)
+	} else {
+		viewModel = cfg.vmf.GeneratePublicUser(user, recipes)
+	}
 
         if r.Header.Get("Accept") == "application/json" {
-                respondJSON(w, 200, list)
+                respondJSON(w, 200, viewModel)
                 return
         }
 
@@ -230,5 +147,5 @@ func (cfg *apiConfig) handlerGetUserProfile(w http.ResponseWriter, r *http.Reque
                 return
         }
 
-        tmpl.Execute(w, list)
+        tmpl.Execute(w, viewModel)
 }

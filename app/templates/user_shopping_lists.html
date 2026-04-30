@@ -7,38 +7,24 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
 </head>
 <body>
-  <div class="navbar">
-          <div class="heading">
-          <h1>The Recipe Repository</h1>
-          </div>
+  <div id="navbar"></div>
+  <script type="module">
+          import { loadNav } from '../js/components.js';
+          loadNav();
+  </script>
 
-          <a href="/">Home</a>
-          
-          <div class="nav-dropdown">
-                  <button class="dropbtn">Create
-                          <i class="fa fa-caret-down"></i>
-                  </button>
-                  <div class="dropbtn-content">
-                          <a href="/recipe-creator">New Recipe</a>
-			  <a href="/shopping-list-creator">New Shopping List</a>
-                  </div>
-          </div>
-          <button class="navbtn" id="logout-button" onclick="logout()">Logout</button>
-  </div>
+  <h1> {{ .UserName }}'s Shopping Lists </h1>
 
-  <h1> {{ .Name }}'s Shopping Lists </h2>
-
-  <div id="shopping_list-viewer">    
+  <div id="shopping-list-viewer">    
 	  <ul id="shoppinglists">
-		  {{ range .Lists }}
+		  {{ range .UserLists }}
 		  <li>
-			  <div class="list">
     <h2>
-	    <a href="/shoppinglists/{{ .ID }}">{{ .Name }}</a>
+	    <a class="listlink" data-id="{{ .ID }}" href="#">{{ .Name }}</a>
       <hr></h2>
       <h4>
          Created: {{ .CreatedAt.Format "Jan 02, 2006" }}
-	 </br>
+	 <br/>
 	 Updated: {{ .UpdatedAt.Format "Jan 02, 2006" }}
       </h4>
       <div class="list-btns">
@@ -51,3 +37,16 @@
 		  {{ end }}
         </ul>
   </div>
+<script type="module">
+	import { getUserShoppingList } from '../js/api.js';
+
+	const lists = document.getElementById('shoppinglists');
+	lists.addEventListener('click', async (event) => {
+		const link = event.target.closest('.listlink');
+		if (!link) return;
+		event.preventDefault();
+		await getUserShoppingList(link.dataset.id);
+	});
+</script>
+</body>
+</html>

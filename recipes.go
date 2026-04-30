@@ -9,39 +9,13 @@ import (
 	"html/template"
 	"mime"
 	"net/http"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/trhys/Recipe-Repo-2/internal/database"
-	"github.com/trhys/Recipe-Repo-2/internal/auth"
+	"github.com/trhys/Recipe-Repo-2/internal/viewmodel"
 )
 
-type ingredientResponse struct {
-	ID		uuid.UUID `json:"id"`
-	Name		string `json:"name"`
-	Quantity 	float32 `json:"quantity"`
-	Unit		string `json:"unit"`
-}
-
-// TODO: document ep usage for struct fields to clarify what is omitted in various endpoints
-
-type recipe struct {
-    ID          uuid.UUID            `json:"id"`
-    Title       string               `json:"title"`
-    CreatedAt   time.Time            `json:"created_at"`
-    UpdatedAt   *time.Time           `json:"updated_at,omitempty"`
-    UserID      *uuid.UUID           `json:"user_id,omitempty"`
-    Author      string               `json:"author,omitempty"`
-    Description string               `json:"description,omitempty"`
-    ImageKey    string               `json:"image_key,omitempty"`
-    Ingredients []ingredientResponse `json:"ingredients,omitempty"`
-    ImageURL    string               `json:"image_url,omitempty"`
-}
-
-type recipeList struct{
-	Recipes []recipe `json:"recipes"`
-}
 func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request) {
 	// Request
 	r.Body = http.MaxBytesReader(w, r.Body, 10 << 20)
@@ -73,23 +47,17 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Authorization
-	token, err := auth.GetBearerToken(r.Header)
-	if err != nil {
-		respondFail(w, 401, "Failed to retrieve bearer token", err)
-		return
-	}
+	// Validate auth from middleware
+	requesterID, ok := r.Context().Value("userID").(uuid.UUID)
+	if !ok {
+                respondFail(w, 401, "Unauthorized", fmt.Errorf("Unauthorized access attempt at user id: %s", requesterID))
+                return
+        }
 
-	subject, err := auth.ValidateJWT(token, cfg.secret)
-	if err != nil {
-		respondFail(w, 401, "Couldn't validate token", err)
-		return
-	}
-
-	if subject != req.UserID {
-		respondFail(w, 401, "Unauthorized access", nil)
-		return
-	}
+	if requesterID != req.UserID {
+                respondFail(w, 401, "Unauthorized", fmt.Errorf("Unauthorized access attempt at user id: %s", requesterID))
+                return
+        }
 
 	// Request is valid - begin processing image file
 	file, fileHeader, err := r.FormFile("image")
@@ -159,6 +127,7 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 	}
 
 	// Connect all ingredients
+	ingredients := []viewmodel.Ingredient{}
 	for _, ing := range req.Ingredients {
 		query := database.AddToRecipeParams{
 			RecipeID: rec.ID,
@@ -171,22 +140,23 @@ func (cfg *apiConfig) handlerCreateRecipe(w http.ResponseWriter, r *http.Request
 		if err != nil {
 			respondFail(w, 500, "Failed to add ingredient", err)
 			return
-		}	
-	}
-	
-	// Response
-	res := recipe{
-		ID: rec.ID,
-		Title: rec.Title,
-		CreatedAt: rec.CreatedAt,
-		UpdatedAt: &rec.UpdatedAt,
-		UserID: &rec.UserID,
-		Author: username,
-		Description: rec.Description,
-		ImageKey: rec.ImageKey,
+		}
+
+		ingName, err := cfg.db.GetIngredientName(r.Context(), ing.ID)
+		if err != nil {
+			respondFail(w, 500, "Couldn't fetch ingredient name", err)
+			return
+		}
+
+		ingredients = append(ingredients, viewmodel.Ingredient{
+			ID: ing.ID,
+			Name: ingName,
+			Quantity: ing.Quantity,
+			Unit: ing.Unit,
+		})
 	}
 
-	respondJSON(w, 201, res)
+	respondJSON(w, 201, cfg.vmf.GenerateRecipeFullViewModel(rec, ingredients))
 }
 
 // Get recipe by ID
@@ -210,15 +180,9 @@ func (cfg *apiConfig) handlerGetRecipe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	author, err := cfg.db.GetName(r.Context(), rec.UserID)
-	if err != nil {
-		respondFail(w, 404, "Couldn't find author", err)
-		return
-	}
-
-	ingredients := []ingredientResponse{}
+	ingredients := []viewmodel.Ingredient{}
 	for _, ing := range i {
-		ingredients = append(ingredients, ingredientResponse{
+		ingredients = append(ingredients, viewmodel.Ingredient{
 			ID: ing.IngredientID,
 			Name: ing.Name,
 			Quantity: ing.Quantity,
@@ -226,26 +190,15 @@ func (cfg *apiConfig) handlerGetRecipe(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	res := recipe{
-		ID: rec.ID,
-		Title: rec.Title,
-		CreatedAt: rec.CreatedAt,
-		UpdatedAt: &rec.UpdatedAt,
-		UserID: &rec.UserID,
-		Ingredients: ingredients,
-		Author: author,
-		Description: rec.Description,
-		ImageKey: rec.ImageKey,
-		ImageURL: fmt.Sprintf("%s/%s", cfg.s3cdn, rec.ImageKey),
-	}
+	model := cfg.vmf.GenerateRecipeFullViewModel(rec, ingredients)
 
 	if r.Header.Get("Accept") == "application/json" {
-		respondJSON(w, 200, res)
+		respondJSON(w, 200, model)
 		return
 	}
 
 	tmpl, _ := template.ParseFiles(filepath.Join("app", "templates", "recipe-viewer.html"))
-	tmpl.Execute(w, res)
+	tmpl.Execute(w, model)
 }
 
 // Get ten most recent recipes
@@ -256,25 +209,5 @@ func (cfg *apiConfig) handlerGetRecipeList(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	list := recipeList{}
-	for _, rec := range recipes{
-		author, err := cfg.db.GetName(r.Context(), rec.UserID)
-		if err != nil {
-			respondFail(w, 404, "Couldn't resolve author", err)
-			return
-		}
-
-		list.Recipes = append(list.Recipes, recipe{
-			ID: rec.ID,
-			Title: rec.Title,
-			CreatedAt: rec.CreatedAt,
-			UpdatedAt: &rec.UpdatedAt,
-			UserID: &rec.UserID,
-			Author: author,
-			ImageKey: rec.ImageKey,
-			ImageURL: fmt.Sprintf("%s/%s", cfg.s3cdn, rec.ImageKey),
-		})
-	}
-
-	respondJSON(w, 200, list)
+	respondJSON(w, 200, cfg.vmf.GenerateRecipeCardViewModel(recipes))
 }

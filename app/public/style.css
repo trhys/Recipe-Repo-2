@@ -15,7 +15,7 @@
   align-items: center;
 }
 
-.navbar a, .navbar .navbtn, .requires-login {
+.navbar a, .navbar button {
   float: left;
   font-size: 16px;
   color: white;
@@ -24,7 +24,7 @@
   text-decoration: none;
 }
 
-.navbar .navbtn, .requires-login {
+.navbar button {
   background: none;
   border: none;
   cursor: pointer;   
@@ -36,18 +36,18 @@
   overflow: hidden;
 }
 
-.nav-dropdown .dropbtn {
+.nav-dropdown button {
   font-size: 16px;
   border: none;
   outline: none;
   color: white;
   padding: 14px 16px;
   background-color: inherit;
-  font-family: inherit; /* Important for vertical align on mobile phones */
-  margin: 0; /* Important for vertical align on mobile phones */
+  font-family: inherit; 
+  margin: 0; 
 }
 
-.navbar a:hover, .navbar .navbtn:hover, .nav-dropdown:hover .dropbtn, .requires-login:hover {
+.navbar a:hover, .navbar button:hover, .nav-dropdown:hover button {
   background-color: red;
 }
 
@@ -101,4 +101,22 @@ html {
 	width: 100%;
 	height: auto;
 	object-position: center;
+}
+
+.error-box {
+  background-color: #fff5f5; 
+  color: #c53030;            
+  border: 1px solid #feb2b2; 
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+}
+
+.error-box::before {
+  content: "⚠️";
+  margin-right: 10px;
 }

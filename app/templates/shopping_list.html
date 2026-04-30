@@ -7,24 +7,11 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
 </head>
 <body>
-  <div class="navbar">
-          <div class="heading">
-          <h1>The Recipe Repository</h1>
-          </div>
-
-          <a href="/">Home</a>
-          
-          <div class="nav-dropdown">
-                  <button class="dropbtn">Create
-                          <i class="fa fa-caret-down"></i>
-                  </button>
-                  <div class="dropbtn-content">
-                          <a href="/recipe-creator">New Recipe</a>
-                  </div>
-          </div>
-	   <button class="requires-login" id="shopping-lists-btn">Shopping Lists</button>
-          <button class="navbtn" id="logout-button" onclick="logout()">Logout</button>
-  </div>
+  <div id="navbar"></div>
+  <script type="module">
+          import { loadNav } from '/js/components.js';
+          loadNav();
+  </script>
 
   <div id="shopping_list-viewer">    
     <h2>
@@ -32,25 +19,19 @@
       <hr></h2>
 
       <h4>
-         Created: {{ .Created.Format "Jan 02, 2006" }}
+         Created: {{ .CreatedAt.Format "Jan 02, 2006" }}
       </h4>
     
       <button class="printlist" id="print-shopping-list" value="{{ .ID }}">Print</button>
       <div class="recipes_in_list">
 	<ul id="recipes">
 		{{ range .Recipes }}
-		<li> <a href="/recipes/{{ .ID }}">{{ .Title }}</a> by <a href="/users/{{ .UserID }}">{{ .Author }}</a> + {{ .Quantity }}</li>
+		<li> <a href="/recipes/{{ .ID }}">{{ .Title }}</a> by <a href="/users/{{ .UserID }}">{{ .Author }}</a></li>
 		{{ else }}
 		<li>No recipes have been added...</li>
 		{{ end }}
 	</ul>
-	</div>
-    
-<script>
-
-
-
-</script>
-    
+	</div>    
+  </div>
 </body>
 </html>

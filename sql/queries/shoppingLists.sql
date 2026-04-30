@@ -21,7 +21,11 @@ SELECT name, user_id FROM shopping_lists
 WHERE id = $1;
 
 -- name: PrintList :many
-SELECT ingredients.name, conversions.from_unit, conversions.to_unit, conversions.ratio, shopping_list_ingredients.units, shopping_list_ingredients.quantity FROM ingredients
-INNER JOIN conversions ON conversions.ingredient_id = ingredients.id
-INNER JOIN shopping_list_ingredients ON shopping_list_ingredients.ingredient_id = ingredients.id
-WHERE shopping_list_ingredients.shopping_list_id = $1;
+SELECT ingredients.name, recipe_ingredients.ingredient_id, recipe_ingredients.quantity, recipe_ingredients.unit, conversions.to_unit, conversions.ratio FROM recipe_ingredients
+INNER JOIN conversions ON conversions.ingredient_id = recipe_ingredients.ingredient_id AND conversions.from_unit = recipe_ingredients.unit
+INNER JOIN ingredients ON ingredients.id = recipe_ingredients.ingredient_id
+WHERE recipe_ingredients.recipe_id IN (
+	SELECT recipe_id FROM shopping_list_recipes
+	WHERE shopping_list_id = $1
+);
+

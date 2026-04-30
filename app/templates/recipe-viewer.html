@@ -7,29 +7,13 @@
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
 </head>
 <body>
-  <div class="navbar">
-          <div class="heading">
-          <h1>The Recipe Repository</h1>
-          </div>
+  <div id="navbar"></div>
+  <script type="module">
+          import { loadNav } from '../js/components.js';
+          loadNav();
+  </script>
 
-          <a href="/">Home</a>
-          
-          <div class="nav-dropdown">
-                  <button class="requires-login">Create
-                          <i class="fa fa-caret-down"></i>
-                  </button>
-                  <div class="dropbtn-content">
-                          <a class="requires-login" href="/recipe-creator">New Recipe</a>
-                          <a class="requires-login" href="/shopping-list-creator">New Shopping List</a>
-                  </div>
-          </div>
-	   <button class="requires-login" id="shopping-lists-btn">Shopping Lists</button>
-          <button class="requires-login" id="logout-button" onclick="logout()">Logout</button>
-	  <a href="/login" class="loginbtn">Log In</a>
-	  <a href="/signup" class="loginbtn">Sign Up</a>
-  </div>>
-
-  <div id="recipe-viewer">    
+  <div id="recipe-viewer" data-id="{{ .ID }}">    
     <h2>
       {{ .Title }}
       <hr></h2>
@@ -58,6 +42,18 @@
       </ul>
     </div>
     <pre>{{ .Description }}</pre> 
+    <button id="addtolist">Add to Shopping List</button>
   </div>
+  <dialog id="modal"></dialog>
+<script type="module">
+	import { addToListModal } from '/js/components.js';
+
+	const recipeID = document.querySelector('#recipe-viewer').dataset.id;
+	const btn = document.getElementById('addtolist');
+	btn.addEventListener('click', async (e) => {
+		e.preventDefault();
+		await addToListModal(recipeID);
+	});
+</script>
 </body>
 </html>
