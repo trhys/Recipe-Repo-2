@@ -1,6 +1,6 @@
 # Overview
 
-A Golang backend with a Postgresql database, containerized with Docker Compose: *The Recipe Repo* is a recipe sharing and shopping helper application. Create/upload recipes with their ingredients and a description and use the shopping list helper to automatically populate a shopping list for your selected recipes.
+A RESTful Golang backend with a Postgresql database, containerized with Docker Compose: *The Recipe Repo* is a recipe sharing and shopping helper application. Create/upload recipes with their ingredients and a description and use the shopping list helper to automatically populate a shopping list for your selected recipes.
 
 <img width="720" height="500" alt="Screenshot of a recipe on The Recipe Repository" src="https://github.com/user-attachments/assets/ae5cdade-9757-4931-b917-65996a8ef9d5" />
 
@@ -22,7 +22,11 @@ This readme assumes for the most part you are running on Unix or WSL.
 
 - Git
 - Docker (recommended)
-- Go (if not using docker)
+- -----------------------
+##### If not using Docker
+- Go
+- Goose
+- Psql
 
 ## Quick Start
 
@@ -49,20 +53,22 @@ Certain environment variables are required to configure the server. You can edit
 
 Note: the database url string will differ for running the server in a docker container. 
 
-For localhost: ```postgres://postgres:postgres@localhost:5432/recipe_repo?sslmode=disable```
+For localhost : ```postgres://postgres:postgres@localhost:5432/recipe_repo?sslmode=disable```
 
-For docker: ```postgres://postgres:postgres@db:5432/recipe_repo?sslmode=disable```
+For Docker (default) : ```postgres://postgres:postgres@db:5432/recipe_repo?sslmode=disable```
 
 - DB= your database url string
-- PLATFORM= no longer used but may return
+- PLATFORM= $
 - SECRET= this is what the auth package will use to validate tokens. keep it secret. keep it safe.
 - JWT_DUR= this sets the expiry on authorization tokens. it is in seconds (```3600``` = 1 hour)
 - APP_DIR= root path for the frontend. probably doesn't need changed but I won't tell you no
-- ADMIN_DIR= path to the admin folder in /app. Separate from the base fileserver
+- ADMIN_DIR= $
 - S3_BUCKET= your s3 bucket for image file storage. you'll need to get this from AWS
 - S3_REGION= your s3 region for your bucket
 - S3_CDN= the cdn url from AWS if it's set up
 - IMAGE_PLACEHOLDER= a key that pulls an image from S3 - use for recipes that have no image uploaded
+
+**$** These variables had a purpose for a time, but currently aren't necessary. I've kept it here so that they can see future use potentially.
 
 **Security note:** This backend server uses JWT authorization for certain endpoints and this demo uses a generic secret in the SECRET env variable. If you plan to use this publicly you should change that.
 
@@ -109,7 +115,7 @@ See full API docs on the [wiki](https://github.com/trhys/Recipe-Repo-2/wiki)
 
 Response bodies take the form of either a JSON body or rendered HTML, depending on the Accept header on certain endpoints.
 
-The [/internal/viewmodel/](https://github.com/trhys/Recipe-Repo-2/tree/rest-and-dry-refactor/internal/viewmodel) package defines the shape of each response.
+The [/internal/viewmodel/](https://github.com/trhys/Recipe-Repo-2/tree/main/internal/viewmodel) package defines the shape of each response.
 
 ## Contributing
 
