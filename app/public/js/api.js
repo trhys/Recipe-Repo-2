@@ -213,3 +213,33 @@ export async function postRecipe(form) {
 		alert(`Error: ${error.message}`)
 	}
 }
+
+export async function postShoppingList() {
+	try {
+		const name = document.getElementById('shopping-list-title');
+
+		let response = await authorizedFetch('/api/shoppinglists', {
+			method: 'POST',
+			body: JSON.stringify({ name: name }),
+		});
+
+		if (response.ok) {
+			alert("Success!");
+			window.location.href = '/';
+			return
+		}
+	} catch (error) {
+		alert(`Error: ${error.message}`);
+	}
+}
+
+export async function postAddtoList(shoppingListID) {
+	try {
+		const name = document.querySelector('.recipeID').className;
+		
+		let respose = await authorizedFetch(`/api/shoppinglists/${shoppingListID}`, {
+			method: 'POST',
+			body: JSON.stringify({ })
+		})
+	}
+}
